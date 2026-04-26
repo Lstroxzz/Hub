@@ -1,3 +1,4 @@
+
 --[[
     AutoHub Organized UI (V6)
     Compact + draggable + END to hide/show
@@ -23,18 +24,22 @@ pcall(function()
 end)
 
 pcall(function()
-    getgenv().AutoHubLoaded = nil
-    getgenv().AutoHubBFLoaded = nil
-    getgenv().AutoHubGridLoaded = nil
-    getgenv().AutoHubCompactLoaded = nil
-    getgenv().AutoHubV5Loaded = nil
-    getgenv().AutoHubV6Loaded = nil
+    if getgenv then
+        getgenv().AutoHubLoaded = nil
+        getgenv().AutoHubBFLoaded = nil
+        getgenv().AutoHubGridLoaded = nil
+        getgenv().AutoHubCompactLoaded = nil
+        getgenv().AutoHubV5Loaded = nil
+        getgenv().AutoHubV6Loaded = nil
+    end
 end)
 
-if getgenv().AutoHubV6Loaded then
+if getgenv and getgenv().AutoHubV6Loaded then
     return
 end
-getgenv().AutoHubV6Loaded = true
+if getgenv then
+    getgenv().AutoHubV6Loaded = true
+end
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -427,6 +432,93 @@ local LEVEL_ROUTES = {
     { min = 2550, max = 9999, sea = "Third Sea", island = "Sea of Treats", targets = { "candy pirate", "chocolate warrior", "cake queen", "dough king", "rip_indra", "leviathan" }, stage = "endgame", complex = false, group = true },
 }
 
+local LOCAL_QUEST_DATA = {
+    [1] = { NameQuest = "BanditQuest1", LevelQuest = 1, Mon = "Bandit", CFrameQuest = CFrame.new(1059.37, 16.5, 1549.99), CFrameMon = CFrame.new(1045, 17, 1560) },
+    [10] = { NameQuest = "JungleQuest", LevelQuest = 1, Mon = "Monkey", CFrameQuest = CFrame.new(-1598.08911, 35.5501175, 153.377838), CFrameMon = CFrame.new(-1448.51807, 67.8530121, 11.4657965) },
+    [15] = { NameQuest = "JungleQuest", LevelQuest = 2, Mon = "Gorilla", CFrameQuest = CFrame.new(-1598.08911, 35.5501175, 153.377838), CFrameMon = CFrame.new(-1129.88367, 40.4635468, -525.423706) },
+    [30] = { NameQuest = "BuggyQuest1", LevelQuest = 1, Mon = "Pirate", CFrameQuest = CFrame.new(-1141.07483, 4.10001802, 3831.5498), CFrameMon = CFrame.new(-1103.51343, 13.7520523, 3896.09106) },
+    [40] = { NameQuest = "BuggyQuest1", LevelQuest = 2, Mon = "Brute", CFrameQuest = CFrame.new(-1141.07483, 4.10001802, 3831.5498), CFrameMon = CFrame.new(-1140.08374, 14.809885, 4322.92139) },
+    [60] = { NameQuest = "DesertQuest", LevelQuest = 1, Mon = "Desert Bandit", CFrameQuest = CFrame.new(894.488647, 5.14000702, 4392.43359), CFrameMon = CFrame.new(924.799805, 6.44867468, 4481.58594) },
+    [75] = { NameQuest = "DesertQuest", LevelQuest = 2, Mon = "Desert Officer", CFrameQuest = CFrame.new(894.488647, 5.14000702, 4392.43359), CFrameMon = CFrame.new(1608.28223, 8.61422443, 4371.00732) },
+    [90] = { NameQuest = "SnowQuest", LevelQuest = 1, Mon = "Snow Bandit", CFrameQuest = CFrame.new(1389.74451, 88.1519318, -1298.90796), CFrameMon = CFrame.new(1354.3479, 87.2727737, -1393.94653) },
+    [100] = { NameQuest = "SnowQuest", LevelQuest = 2, Mon = "Snowman", CFrameQuest = CFrame.new(1389.74451, 88.1519318, -1298.90796), CFrameMon = CFrame.new(1201.64124, 144.57959, -1550.06702) },
+    [120] = { NameQuest = "MarineQuest2", LevelQuest = 1, Mon = "Chief Petty Officer", CFrameQuest = CFrame.new(-5039.58643, 27.3500385, 4324.68018), CFrameMon = CFrame.new(-4881.23096, 22.6520443, 4273.75244) },
+    [150] = { NameQuest = "SkyQuest", LevelQuest = 1, Mon = "Sky Bandit", CFrameQuest = CFrame.new(-4839.53027, 716.368591, -2619.44165), CFrameMon = CFrame.new(-4953.20703, 295.744202, -2899.229) },
+    [175] = { NameQuest = "SkyQuest", LevelQuest = 2, Mon = "Dark Master", CFrameQuest = CFrame.new(-4839.53027, 716.368591, -2619.44165), CFrameMon = CFrame.new(-5259.84473, 391.397675, -2229.0354) },
+    [190] = { NameQuest = "PrisonerQuest", LevelQuest = 1, Mon = "Prisoner", CFrameQuest = CFrame.new(5308.93115, 1.65517521, 475.120514), CFrameMon = CFrame.new(5098.97363, -0.320405811, 474.237335) },
+    [210] = { NameQuest = "PrisonerQuest", LevelQuest = 2, Mon = "Dangerous Prisoner", CFrameQuest = CFrame.new(5308.93115, 1.65517521, 475.120514), CFrameMon = CFrame.new(5654.56348, 15.6334019, 866.299194) },
+    [250] = { NameQuest = "ColosseumQuest", LevelQuest = 1, Mon = "Toga Warrior", CFrameQuest = CFrame.new(-1580.04663, 6.35000277, -2986.47534), CFrameMon = CFrame.new(-1820.21484, 51.683857, -2740.66504) },
+    [275] = { NameQuest = "ColosseumQuest", LevelQuest = 2, Mon = "Gladiator", CFrameQuest = CFrame.new(-1580.04663, 6.35000277, -2986.47534), CFrameMon = CFrame.new(-1292.83813, 56.3808823, -3339.03149) },
+    [300] = { NameQuest = "MagmaQuest", LevelQuest = 1, Mon = "Military Soldier", CFrameQuest = CFrame.new(-5313.37012, 10.9500084, 8515.29395), CFrameMon = CFrame.new(-5411.16455, 11.0815544, 8454.29297) },
+    [325] = { NameQuest = "MagmaQuest", LevelQuest = 2, Mon = "Military Spy", CFrameQuest = CFrame.new(-5313.37012, 10.9500084, 8515.29395), CFrameMon = CFrame.new(-5802.86816, 86.262413, 8828.85938) },
+    [375] = { NameQuest = "FishmanQuest", LevelQuest = 1, Mon = "Fishman Warrior", CFrameQuest = CFrame.new(61122.6523, 18.4974422, 1569.39978), CFrameMon = CFrame.new(60878.3008, 18.48283, 1543.75745) },
+    [400] = { NameQuest = "FishmanQuest", LevelQuest = 2, Mon = "Fishman Commando", CFrameQuest = CFrame.new(61122.6523, 18.4974422, 1569.39978), CFrameMon = CFrame.new(61922.6328, 18.48283, 1493.93433) },
+    [625] = { NameQuest = "FountainQuest", LevelQuest = 1, Mon = "Galley Pirate", CFrameQuest = CFrame.new(5259.81982, 37.3500175, 4050.0293), CFrameMon = CFrame.new(5551.02197, 78.9013519, 3930.41284) },
+    [650] = { NameQuest = "FountainQuest", LevelQuest = 2, Mon = "Galley Captain", CFrameQuest = CFrame.new(5259.81982, 37.3500175, 4050.0293), CFrameMon = CFrame.new(5441.95166, 42.5020599, 4950.09375) },
+    [700] = { NameQuest = "Area1Quest", LevelQuest = 1, Mon = "Raider", CFrameQuest = CFrame.new(-429.543518, 71.7699966, 1836.18188), CFrameMon = CFrame.new(-728.326721, 52.7793198, 2345.77051) },
+    [725] = { NameQuest = "Area1Quest", LevelQuest = 2, Mon = "Mercenary", CFrameQuest = CFrame.new(-429.543518, 71.7699966, 1836.18188), CFrameMon = CFrame.new(-1004.3244, 80.1588669, 1424.61938) },
+    [775] = { NameQuest = "Area2Quest", LevelQuest = 1, Mon = "Swan Pirate", CFrameQuest = CFrame.new(638.43811, 71.769989, 918.282898), CFrameMon = CFrame.new(1068.66431, 137.614288, 1322.10608) },
+    [800] = { NameQuest = "Area2Quest", LevelQuest = 2, Mon = "Factory Staff", CFrameQuest = CFrame.new(632.698608, 73.1055908, 918.666321), CFrameMon = CFrame.new(73.0786743, 81.8634415, -27.4706726) },
+    [875] = { NameQuest = "MarineQuest3", LevelQuest = 1, Mon = "Marine Lieutenant", CFrameQuest = CFrame.new(-2440.79639, 71.7140732, -3216.06812), CFrameMon = CFrame.new(-2821.37231, 75.8972778, -3070.08911) },
+    [900] = { NameQuest = "MarineQuest3", LevelQuest = 2, Mon = "Marine Captain", CFrameQuest = CFrame.new(-2440.79639, 71.7140732, -3216.06812), CFrameMon = CFrame.new(-1861.23108, 80.1765823, -3254.69751) },
+    [950] = { NameQuest = "ZombieQuest", LevelQuest = 1, Mon = "Zombie", CFrameQuest = CFrame.new(-5497.06152, 47.5923004, -795.237061), CFrameMon = CFrame.new(-5657.77686, 78.9697342, -928.687012) },
+    [975] = { NameQuest = "ZombieQuest", LevelQuest = 2, Mon = "Vampire", CFrameQuest = CFrame.new(-5497.06152, 47.5923004, -795.237061), CFrameMon = CFrame.new(-6037.66797, 32.184639, -1340.65979) },
+    [1000] = { NameQuest = "SnowMountainQuest", LevelQuest = 1, Mon = "Snow Trooper", CFrameQuest = CFrame.new(609.858826, 400.119904, -5372.25928), CFrameMon = CFrame.new(549.147339, 427.387054, -5563.69873) },
+    [1050] = { NameQuest = "SnowMountainQuest", LevelQuest = 2, Mon = "Winter Warrior", CFrameQuest = CFrame.new(609.858826, 400.119904, -5372.25928), CFrameMon = CFrame.new(1142.74512, 475.639801, -5199.4165) },
+    [1100] = { NameQuest = "IceSideQuest", LevelQuest = 1, Mon = "Lab Subordinate", CFrameQuest = CFrame.new(-6064.06885, 15.2422857, -4902.97852), CFrameMon = CFrame.new(-5707.47168, 15.9517097, -4513.39209) },
+    [1125] = { NameQuest = "IceSideQuest", LevelQuest = 2, Mon = "Horned Warrior", CFrameQuest = CFrame.new(-6064.06885, 15.2422857, -4902.97852), CFrameMon = CFrame.new(-6341.3667, 15.9517708, -5723.16211) },
+    [1175] = { NameQuest = "FireSideQuest", LevelQuest = 1, Mon = "Magma Ninja", CFrameQuest = CFrame.new(-5428.03174, 15.0622921, -5299.43457), CFrameMon = CFrame.new(-5449.67285, 76.6587448, -5808.20068) },
+    [1200] = { NameQuest = "FireSideQuest", LevelQuest = 2, Mon = "Lava Pirate", CFrameQuest = CFrame.new(-5428.03174, 15.0622921, -5299.43457), CFrameMon = CFrame.new(-5213.33154, 49.7378807, -4701.45117) },
+    [1250] = { NameQuest = "ShipQuest1", LevelQuest = 1, Mon = "Ship Deckhand", CFrameQuest = CFrame.new(1037.80127, 125.092171, 32911.6016), CFrameMon = CFrame.new(1212.01111, 150.792053, 33059.2461) },
+    [1275] = { NameQuest = "ShipQuest1", LevelQuest = 2, Mon = "Ship Engineer", CFrameQuest = CFrame.new(1037.80127, 125.092171, 32911.6016), CFrameMon = CFrame.new(919.478638, 43.544014, 32779.9688) },
+    [1300] = { NameQuest = "ShipQuest2", LevelQuest = 1, Mon = "Ship Steward", CFrameQuest = CFrame.new(968.80957, 125.092171, 33244.125), CFrameMon = CFrame.new(919.438538, 129.556, 33436.0352) },
+    [1325] = { NameQuest = "ShipQuest2", LevelQuest = 2, Mon = "Ship Officer", CFrameQuest = CFrame.new(968.80957, 125.092171, 33244.125), CFrameMon = CFrame.new(1036.01794, 181.439041, 33315.7266) },
+    [1350] = { NameQuest = "FrostQuest", LevelQuest = 1, Mon = "Arctic Warrior", CFrameQuest = CFrame.new(5667.6582, 26.7997818, -6486.08984), CFrameMon = CFrame.new(5966.24609, 62.9700203, -6179.38281) },
+    [1375] = { NameQuest = "FrostQuest", LevelQuest = 2, Mon = "Snow Lurker", CFrameQuest = CFrame.new(5667.6582, 26.7997818, -6486.08984), CFrameMon = CFrame.new(5407.07373, 69.1943741, -6880.88037) },
+    [1425] = { NameQuest = "ForgottenQuest", LevelQuest = 1, Mon = "Sea Soldier", CFrameQuest = CFrame.new(-3054.44458, 235.544281, -10142.8193), CFrameMon = CFrame.new(-3028.22363, 64.6745148, -9775.42676) },
+    [1450] = { NameQuest = "ForgottenQuest", LevelQuest = 2, Mon = "Water Fighter", CFrameQuest = CFrame.new(-3054.44458, 235.544281, -10142.8193), CFrameMon = CFrame.new(-3352.90137, 285.015564, -10534.8418) },
+    [1500] = { NameQuest = "PiratePortQuest", LevelQuest = 1, Mon = "Pirate Millionaire", CFrameQuest = CFrame.new(-290.074677, 42.9034653, 5581.58984), CFrameMon = CFrame.new(-245.996384, 47.3061523, 5584.10059) },
+    [1525] = { NameQuest = "PiratePortQuest", LevelQuest = 2, Mon = "Pistol Billionaire", CFrameQuest = CFrame.new(-290.074677, 42.9034653, 5581.58984), CFrameMon = CFrame.new(-187.330154, 86.2398758, 6013.51367) },
+    [1575] = { NameQuest = "DragonCrewQuest", LevelQuest = 1, Mon = "Dragon Crew Warrior", CFrameQuest = CFrame.new(6737, 127, -713), CFrameMon = CFrame.new(6737, 127, -713) },
+    [1600] = { NameQuest = "DragonCrewQuest", LevelQuest = 2, Mon = "Dragon Crew Archer", CFrameQuest = CFrame.new(6737, 127, -713), CFrameMon = CFrame.new(6743, 484, 209) },
+    [1700] = { NameQuest = "MarineTreeIsland", LevelQuest = 1, Mon = "Marine Commodore", CFrameQuest = CFrame.new(2180.54126, 27.8156815, -6741.5498), CFrameMon = CFrame.new(2286.00781, 73.1339188, -7159.80908) },
+    [1725] = { NameQuest = "MarineTreeIsland", LevelQuest = 2, Mon = "Marine Rear Admiral", CFrameQuest = CFrame.new(2179.98828, 28.7312393, -6740.05518), CFrameMon = CFrame.new(3656.77368, 160.524063, -7001.59863) },
+    [1775] = { NameQuest = "DeepForestIsland3", LevelQuest = 1, Mon = "Fishman Raider", CFrameQuest = CFrame.new(-10581.6563, 330.872955, -8761.18652), CFrameMon = CFrame.new(-10407.5264, 331.762634, -8368.5166) },
+    [1800] = { NameQuest = "DeepForestIsland3", LevelQuest = 2, Mon = "Fishman Captain", CFrameQuest = CFrame.new(-10581.6563, 330.872955, -8761.18652), CFrameMon = CFrame.new(-10994.7012, 352.381409, -9002.11035) },
+    [1825] = { NameQuest = "DeepForestIsland", LevelQuest = 1, Mon = "Forest Pirate", CFrameQuest = CFrame.new(-13234.04, 331.488495, -7625.40137), CFrameMon = CFrame.new(-13274.4785, 332.378143, -7769.58057) },
+    [1850] = { NameQuest = "DeepForestIsland", LevelQuest = 2, Mon = "Mythological Pirate", CFrameQuest = CFrame.new(-13234.04, 331.488495, -7625.40137), CFrameMon = CFrame.new(-13680.6074, 501.081543, -6991.18945) },
+    [1900] = { NameQuest = "DeepForestIsland2", LevelQuest = 1, Mon = "Jungle Pirate", CFrameQuest = CFrame.new(-12680.3818, 389.971039, -9902.01953), CFrameMon = CFrame.new(-12256.1602, 331.738281, -10485.8369) },
+    [1925] = { NameQuest = "DeepForestIsland2", LevelQuest = 2, Mon = "Musketeer Pirate", CFrameQuest = CFrame.new(-12680.3818, 389.971039, -9902.01953), CFrameMon = CFrame.new(-13457.9043, 391.545654, -9859.17773) },
+    [1975] = { NameQuest = "HauntedQuest1", LevelQuest = 1, Mon = "Reborn Skeleton", CFrameQuest = CFrame.new(-9479.2168, 141.215088, 5566.09277), CFrameMon = CFrame.new(-8763.72363, 165.722992, 6159.86182) },
+    [2000] = { NameQuest = "HauntedQuest1", LevelQuest = 2, Mon = "Living Zombie", CFrameQuest = CFrame.new(-9479.2168, 141.215088, 5566.09277), CFrameMon = CFrame.new(-10144.1318, 138.626678, 5838.08887) },
+    [2025] = { NameQuest = "HauntedQuest2", LevelQuest = 1, Mon = "Demonic Soul", CFrameQuest = CFrame.new(-9516.99316, 172.017181, 6078.46533), CFrameMon = CFrame.new(-9505.87207, 172.104828, 6158.99316) },
+    [2050] = { NameQuest = "HauntedQuest2", LevelQuest = 2, Mon = "Possessed Mummy", CFrameQuest = CFrame.new(-9516.99316, 172.017181, 6078.46533), CFrameMon = CFrame.new(-9582.02246, 6.25152731, 6205.47852) },
+    [2075] = { NameQuest = "NutsIslandQuest", LevelQuest = 1, Mon = "Peanut Scout", CFrameQuest = CFrame.new(-2104.39087, 38.1041679, -10194.2188), CFrameMon = CFrame.new(-2143.24194, 47.7219849, -10029.9951) },
+    [2100] = { NameQuest = "NutsIslandQuest", LevelQuest = 2, Mon = "Peanut President", CFrameQuest = CFrame.new(-2104.39087, 38.1041679, -10194.2188), CFrameMon = CFrame.new(-1859.354, 38.1031685, -10422.4297) },
+    [2125] = { NameQuest = "IceCreamIslandQuest", LevelQuest = 1, Mon = "Ice Cream Chef", CFrameQuest = CFrame.new(-820.648254, 65.8195267, -10965.7959), CFrameMon = CFrame.new(-872.246582, 65.8195724, -10919.957) },
+    [2150] = { NameQuest = "IceCreamIslandQuest", LevelQuest = 2, Mon = "Ice Cream Commander", CFrameQuest = CFrame.new(-820.648254, 65.8195267, -10965.7959), CFrameMon = CFrame.new(-558.061035, 112.048958, -11290.7744) },
+    [2200] = { NameQuest = "CakeQuest1", LevelQuest = 1, Mon = "Cookie Crafter", CFrameQuest = CFrame.new(-2021.32007, 37.7982254, -12028.7295), CFrameMon = CFrame.new(-2374.13672, 37.7982635, -12125.3086) },
+    [2225] = { NameQuest = "CakeQuest1", LevelQuest = 2, Mon = "Cake Guard", CFrameQuest = CFrame.new(-2021.32007, 37.7982254, -12028.7295), CFrameMon = CFrame.new(-1598.30701, 43.7731972, -12244.5811) },
+    [2250] = { NameQuest = "CakeQuest2", LevelQuest = 1, Mon = "Baking Staff", CFrameQuest = CFrame.new(-1927.91602, 37.7981339, -12842.5391), CFrameMon = CFrame.new(-1887.80994, 77.6185074, -12998.3506) },
+    [2275] = { NameQuest = "CakeQuest2", LevelQuest = 2, Mon = "Head Baker", CFrameQuest = CFrame.new(-1927.91602, 37.7981339, -12842.5391), CFrameMon = CFrame.new(-2216.18823, 82.8845215, -12869.2939) },
+    [2300] = { NameQuest = "ChocQuest1", LevelQuest = 1, Mon = "Cocoa Warrior", CFrameQuest = CFrame.new(233.228363, 29.8760014, -12201.2334), CFrameMon = CFrame.new(-21.5532837, 80.5749969, -12352.3877) },
+    [2325] = { NameQuest = "ChocQuest1", LevelQuest = 2, Mon = "Chocolate Bar Battler", CFrameQuest = CFrame.new(233.228363, 29.8760014, -12201.2334), CFrameMon = CFrame.new(582.590576, 77.1880951, -12463.1621) },
+    [2350] = { NameQuest = "ChocQuest2", LevelQuest = 1, Mon = "Sweet Thief", CFrameQuest = CFrame.new(150.506638, 30.6936932, -12774.5029), CFrameMon = CFrame.new(165.188477, 76.0588531, -12600.8369) },
+    [2375] = { NameQuest = "ChocQuest2", LevelQuest = 2, Mon = "Candy Rebel", CFrameQuest = CFrame.new(150.506638, 30.6936932, -12774.5029), CFrameMon = CFrame.new(134.865631, 77.2476807, -12876.5479) },
+    [2400] = { NameQuest = "CandyQuest1", LevelQuest = 1, Mon = "Candy Pirate", CFrameQuest = CFrame.new(-1150.04004, 20.3789349, -14446.335), CFrameMon = CFrame.new(-1310.50037, 26.0165234, -14562.4043) },
+    [2425] = { NameQuest = "CandyQuest1", LevelQuest = 2, Mon = "Snow Demon", CFrameQuest = CFrame.new(-1150.04004, 20.3789349, -14446.335), CFrameMon = CFrame.new(-880.200623, 71.2477646, -14538.6094) },
+    [2450] = { NameQuest = "TikiQuest1", LevelQuest = 1, Mon = "Isle Outlaw", CFrameQuest = CFrame.new(-16545.9355, 55.6863556, -173.230499), CFrameMon = CFrame.new(-16120.6035, 116.520554, -103.038849) },
+    [2475] = { NameQuest = "TikiQuest1", LevelQuest = 2, Mon = "Island Boy", CFrameQuest = CFrame.new(-16545.9355, 55.6863556, -173.230499), CFrameMon = CFrame.new(-16751.3125, 121.226219, -264.015015) },
+    [2500] = { NameQuest = "TikiQuest2", LevelQuest = 1, Mon = "Sun-Kissed Warrior", CFrameQuest = CFrame.new(-16539.0781, 55.6863289, 1051.57385), CFrameMon = CFrame.new(-16294.6748, 32.7874393, 1062.4856) },
+    [2525] = { NameQuest = "TikiQuest2", LevelQuest = 2, Mon = "Isle Champion", CFrameQuest = CFrame.new(-16539.0781, 55.6863289, 1051.57385), CFrameMon = CFrame.new(-16933.2129, 93.3503036, 999.450989) },
+    [2600] = { NameQuest = "SubmergedQuest1", LevelQuest = 1, Mon = "Reef Bandit", CFrameQuest = CFrame.new(10882.264, -2086.322, 10034.226), CFrameMon = CFrame.new(10736.6191, -2087.8439, 9338.4882) },
+    [2625] = { NameQuest = "SubmergedQuest1", LevelQuest = 2, Mon = "Coral Pirate", CFrameQuest = CFrame.new(10882.264, -2086.322, 10034.226), CFrameMon = CFrame.new(10965.1025, -2158.8842, 9177.2597) },
+    [2650] = { NameQuest = "SubmergedQuest2", LevelQuest = 1, Mon = "Sea Chanter", CFrameQuest = CFrame.new(10882.264, -2086.322, 10034.226), CFrameMon = CFrame.new(10621.0342, -2087.844, 10102.0332) },
+    [2675] = { NameQuest = "SubmergedQuest2", LevelQuest = 2, Mon = "Ocean Prophet", CFrameQuest = CFrame.new(10882.264, -2086.322, 10034.226), CFrameMon = CFrame.new(11056.1445, -2001.6717, 10117.4493) },
+    [2700] = { NameQuest = "SubmergedQuest3", LevelQuest = 1, Mon = "High Disciple", CFrameQuest = CFrame.new(9636.52441, -1992.19507, 9609.52832), CFrameMon = CFrame.new(9828.08789, -1940.90894, 9693.06348) },
+    [2725] = { NameQuest = "SubmergedQuest3", LevelQuest = 2, Mon = "Grand Devotee", CFrameQuest = CFrame.new(9636.52441, -1992.19507, 9609.52832), CFrameMon = CFrame.new(9557.58496, -1928.04041, 9859.18262) },
+}
+
 local State = {
     running = true,
     startedAt = os.clock(),
@@ -450,6 +542,7 @@ local State = {
     cache = {
         lastBossSeen = "",
         lastAdminSeen = "",
+        lastWebhookSent = 0,
     },
     stats = {
         actions = 0,
@@ -473,6 +566,8 @@ local State = {
         selectedCategory = "auto_farm",
         searchText = "",
         webhookUrl = "",
+        webhookInterval = 12,
+        webhookBatchSize = 8,
         mobKeyword = "",
         bossKeyword = "",
         fruitKeyword = "",
@@ -595,11 +690,18 @@ end
 local function addAction(message, count)
     State.stats.actions = State.stats.actions + (count or 1)
     State.stats.last = message
+    local actionKey = "actionlog_" .. slugify(message or "")
+    local t = State.cooldowns[actionKey] or 0
+    if now() - t >= 8 then
+        State.cooldowns[actionKey] = now()
+        pushEvent("action: " .. tostring(message))
+    end
 end
 
 local function addError(message)
     State.stats.errors = State.stats.errors + 1
     State.stats.last = message
+    pushEvent("error: " .. tostring(message))
 end
 
 local function cooldownReady(key, seconds)
@@ -655,6 +757,7 @@ local function distanceToPos(pos)
 end
 
 local function getObjPosition(obj)
+    if not obj then return nil end
     if obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") then
         return obj.HumanoidRootPart.Position
     end
@@ -846,7 +949,9 @@ local function tryPrompt(prompt)
         return false
     end
     local ok = pcall(function()
-        fireproximityprompt(prompt)
+        if fireproximityprompt then
+            fireproximityprompt(prompt)
+        end
     end)
     return ok
 end
@@ -876,8 +981,10 @@ local function touchPart(part)
         return false
     end
     local ok = pcall(function()
-        firetouchinterest(root, part, 0)
-        firetouchinterest(root, part, 1)
+        if firetouchinterest then
+            firetouchinterest(root, part, 0)
+            firetouchinterest(root, part, 1)
+        end
     end)
     return ok
 end
@@ -912,7 +1019,7 @@ local function runTeleportCycle(useTween)
 end
 
 local function ensureAntiAfk()
-    if State.conns.antiAfk then
+    if State.conns.antiAfk ~= nil then
         return
     end
     State.conns.antiAfk = LocalPlayer.Idled:Connect(function()
@@ -924,14 +1031,14 @@ local function ensureAntiAfk()
 end
 
 local function ensureInfiniteJump()
-    if State.conns.infJump then
+    if State.conns.infJump ~= nil then
         return
     end
     State.conns.infJump = UserInputService.JumpRequest:Connect(function()
         if not State.running then
             return
         end
-        if State.flagsInfJump then
+        if State.flagsInfJump == true then
             local hum = getHumanoid()
             if hum then
                 hum:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -942,7 +1049,7 @@ end
 
 local function ensureWhiteOverlay(enabled)
     if enabled then
-        if State.ui.whiteOverlay then
+        if State.ui.whiteOverlay ~= nil then
             return
         end
         local g = Instance.new("ScreenGui")
@@ -957,7 +1064,7 @@ local function ensureWhiteOverlay(enabled)
         f.Parent = g
         State.ui.whiteOverlay = g
     else
-        if State.ui.whiteOverlay then
+        if State.ui.whiteOverlay ~= nil then
             State.ui.whiteOverlay:Destroy()
             State.ui.whiteOverlay = nil
         end
@@ -1112,7 +1219,14 @@ end
 
 local function postWebhook(url, payload)
     local body = HttpService:JSONEncode(payload)
-    local requestFn = request or http_request or (syn and syn.request)
+    local requestFn = nil
+    if _G.request then
+        requestFn = _G.request
+    elseif _G.http_request then
+        requestFn = _G.http_request
+    elseif _G.syn and _G.syn.request then
+        requestFn = _G.syn.request
+    end
     if requestFn then
         local ok = pcall(function()
             requestFn({
@@ -1130,26 +1244,86 @@ local function postWebhook(url, payload)
     return ok
 end
 
+local function isWebhookUrlAllowed(url)
+    local lower = string.lower(trim(url))
+    if lower == "" then
+        return false
+    end
+    return string.sub(lower, 1, 8) == "https://" and #lower >= 16
+end
+
+local function sanitizeWebhookMessage(message)
+    local msg = tostring(message or "")
+    local lower = string.lower(msg)
+
+    if containsAny(lower, { "player nearby:", "possible staff:", "auto leave triggered" }) then
+        return nil
+    end
+
+    if LocalPlayer and LocalPlayer.Name and LocalPlayer.Name ~= "" then
+        msg = string.gsub(msg, LocalPlayer.Name, "[local]")
+    end
+
+    msg = string.gsub(msg, "@", "")
+    if #msg > 180 then
+        msg = string.sub(msg, 1, 177) .. "..."
+    end
+    return msg
+end
+
+local function collectWebhookFields()
+    local fields = {}
+    local usedIndexes = {}
+    local maxBatch = math.clamp(math.floor(tonumber(State.config.webhookBatchSize) or 8), 1, 12)
+
+    for idx, entry in ipairs(State.eventQueue) do
+        if #fields >= maxBatch then
+            break
+        end
+        local safeMsg = sanitizeWebhookMessage(entry.m)
+        if safeMsg and safeMsg ~= "" then
+            table.insert(fields, {
+                name = os.date("%X", entry.t),
+                value = safeMsg,
+                inline = false,
+            })
+        end
+        table.insert(usedIndexes, idx)
+    end
+
+    return fields, usedIndexes
+end
+
 local function sendWebhookBatch()
     local url = trim(State.config.webhookUrl)
     if url == "" or #State.eventQueue == 0 then
         return false
     end
-    local fields = {}
-    for _ = 1, math.min(8, #State.eventQueue) do
-        local e = table.remove(State.eventQueue, 1)
-        table.insert(fields, {
-            name = os.date("%X", e.t),
-            value = e.m,
-            inline = false,
-        })
+    if not isWebhookUrlAllowed(url) then
+        State.stats.last = "webhook url invalida"
+        return false
     end
+
+    local interval = math.max(4, tonumber(State.config.webhookInterval) or 12)
+    if now() - (State.cache.lastWebhookSent or 0) < interval then
+        return false
+    end
+
+    local fields, usedIndexes = collectWebhookFields()
+    if #fields == 0 then
+        for i = #usedIndexes, 1, -1 do
+            table.remove(State.eventQueue, usedIndexes[i])
+        end
+        return false
+    end
+
+    local session = string.sub(tostring(game.JobId or "local"), 1, 8)
     local payload = {
-        username = "AutoHub Organized",
+        username = "AutoHub Logs",
         embeds = {
             {
-                title = "Event Feed",
-                description = "Player: " .. LocalPlayer.Name,
+                title = "Runtime Feed (Safe)",
+                description = "Version: " .. VERSION .. " | Session: " .. session,
                 color = 4169983,
                 fields = fields,
             },
@@ -1157,7 +1331,13 @@ local function sendWebhookBatch()
     }
     local ok = postWebhook(url, payload)
     if ok then
+        for i = #usedIndexes, 1, -1 do
+            table.remove(State.eventQueue, usedIndexes[i])
+        end
+        State.cache.lastWebhookSent = now()
         State.stats.last = "webhook sent"
+    else
+        State.stats.last = "webhook failed"
     end
     return ok
 end
@@ -1169,6 +1349,8 @@ local function encodeConfig()
             selectedCategory = State.config.selectedCategory,
             searchText = State.config.searchText,
             webhookUrl = State.config.webhookUrl,
+            webhookInterval = State.config.webhookInterval,
+            webhookBatchSize = State.config.webhookBatchSize,
             mobKeyword = State.config.mobKeyword,
             bossKeyword = State.config.bossKeyword,
             fruitKeyword = State.config.fruitKeyword,
@@ -1185,7 +1367,7 @@ local function encodeConfig()
 end
 
 local function saveConfig()
-    if not writefile then
+    if not _G.writefile then
         return false
     end
     local ok, text = pcall(function()
@@ -1195,17 +1377,17 @@ local function saveConfig()
         return false
     end
     local wOk = pcall(function()
-        writefile(SAVE_FILE, text)
+        _G.writefile(SAVE_FILE, text)
     end)
     return wOk
 end
 
 local function loadConfig()
-    if not readfile or not isfile or not isfile(SAVE_FILE) then
+    if not _G.readfile or not _G.isfile or not _G.isfile(SAVE_FILE) then
         return false
     end
     local ok, decoded = pcall(function()
-        return HttpService:JSONDecode(readfile(SAVE_FILE))
+        return HttpService:JSONDecode(_G.readfile(SAVE_FILE))
     end)
     if not ok or type(decoded) ~= "table" then
         return false
@@ -1224,6 +1406,8 @@ local function loadConfig()
         end
         State.config.searchText = tostring(c.searchText or State.config.searchText)
         State.config.webhookUrl = tostring(c.webhookUrl or State.config.webhookUrl)
+        State.config.webhookInterval = math.max(4, tonumber(c.webhookInterval) or State.config.webhookInterval)
+        State.config.webhookBatchSize = math.clamp(math.floor(tonumber(c.webhookBatchSize) or State.config.webhookBatchSize), 1, 12)
         State.config.mobKeyword = tostring(c.mobKeyword or State.config.mobKeyword)
         State.config.bossKeyword = tostring(c.bossKeyword or State.config.bossKeyword)
         State.config.fruitKeyword = tostring(c.fruitKeyword or State.config.fruitKeyword)
@@ -1258,6 +1442,7 @@ local function refreshPerception()
     local desc = Workspace:GetDescendants()
     local budget = 0
     for _, obj in ipairs(desc) do
+        if not obj or not obj.Parent then break end
         budget = budget + 1
         if budget > 18000 then
             break
@@ -1436,6 +1621,221 @@ local function stageSettings(stage, item)
     }
 end
 
+local function toCFrame(value)
+    if typeof(value) == "CFrame" then
+        return value
+    end
+    if typeof(value) == "Vector3" then
+        return CFrame.new(value)
+    end
+    if type(value) == "table" then
+        local x = tonumber(value.X or value[1])
+        local y = tonumber(value.Y or value[2])
+        local z = tonumber(value.Z or value[3])
+        if x and y and z then
+            return CFrame.new(x, y, z)
+        end
+    end
+    return nil
+end
+
+local function getQuestModule()
+    local env = nil
+    local ok = pcall(function()
+        if _G.getgenv then
+            env = _G.getgenv() or nil
+        end
+    end)
+    if ok and type(env) == "table" and type(env.QuestIlha) == "table" then
+        return env.QuestIlha
+    end
+    if type(_G) == "table" and type(_G.QuestIlha) == "table" then
+        return _G.QuestIlha
+    end
+    return nil
+end
+
+local function getQuestDataForLevel(level)
+    local questModule = getQuestModule()
+    if type(questModule) == "table" then
+        if type(questModule.GetQuestForLevel) == "function" then
+            local ok, data = pcall(function()
+                return questModule.GetQuestForLevel(level)
+            end)
+            if ok and type(data) == "table" then
+                return data
+            end
+        end
+
+        if type(questModule.QuestData) == "table" then
+            local selected = nil
+            local highest = 0
+            for req, data in pairs(questModule.QuestData) do
+                local n = tonumber(req)
+                if n and level >= n and n > highest and type(data) == "table" then
+                    highest = n
+                    selected = data
+                end
+            end
+            if selected then
+                return selected
+            end
+        end
+    end
+
+    local selected = nil
+    local highest = 0
+    for req, data in pairs(LOCAL_QUEST_DATA) do
+        local n = tonumber(req)
+        if n and level >= n and n > highest and type(data) == "table" then
+            highest = n
+            selected = data
+        end
+    end
+    return selected
+end
+
+local function getQuestUiText()
+    local main = PlayerGui:FindFirstChild("Main")
+    local questFrame = main and main:FindFirstChild("Quest")
+    if not questFrame then
+        return "", false
+    end
+
+    local visible = false
+    pcall(function()
+        visible = questFrame.Visible == true
+    end)
+    if not visible then
+        return "", false
+    end
+
+    local parts = {}
+    for _, obj in ipairs(questFrame:GetDescendants()) do
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+            local text = trim(obj.Text)
+            if text ~= "" then
+                table.insert(parts, string.lower(text))
+            end
+        end
+    end
+    return table.concat(parts, " | "), true
+end
+
+local function isQuestActiveForMob(mobName)
+    local text, visible = getQuestUiText()
+    if not visible then
+        return false
+    end
+    local mobLower = string.lower(trim(tostring(mobName or "")))
+    if mobLower ~= "" and string.find(text, mobLower, 1, true) then
+        return true
+    end
+    return false
+end
+
+local function isAnyQuestActive()
+    local text, visible = getQuestUiText()
+    if not visible then
+        return false
+    end
+    return text ~= ""
+end
+
+local function getCommFRemote()
+    local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+    if not remotes then
+        return nil
+    end
+    local comm = remotes:FindFirstChild("CommF_")
+    if comm and comm:IsA("RemoteFunction") then
+        return comm
+    end
+    return nil
+end
+
+local function invokeCommF(...)
+    local comm = getCommFRemote()
+    if not comm then
+        return false, nil
+    end
+    local args = {...}
+    local ok, result = pcall(function()
+        return comm:InvokeServer(unpack(args))
+    end)
+    return ok, result
+end
+
+local function startQuestFromData(questData)
+    if type(questData) ~= "table" then
+        return false
+    end
+    local questName = trim(tostring(questData.NameQuest or ""))
+    local questLevel = tonumber(questData.LevelQuest) or questData.LevelQuest
+    if questName == "" or questLevel == nil then
+        return false, nil
+    end
+    return invokeCommF("StartQuest", questName, questLevel)
+end
+
+local function abandonQuest()
+    return select(1, invokeCommF("AbandonQuest"))
+end
+
+local function ensureQuestForAutoFarm(questData, route, settings)
+    if type(questData) ~= "table" then
+        return false
+    end
+
+    local acted = false
+    local mobName = tostring(questData.Mon or "")
+
+    if isQuestActiveForMob(mobName) then
+        return acted
+    end
+
+    local questCF = toCFrame(questData.CFrameQuest)
+    if questCF then
+        acted = moveToCFrame(questCF * CFrame.new(0, 3, 0), settings.useTween or (route and route.complex)) or acted
+    end
+
+    local key = "quest_start_" .. slugify(tostring(questData.NameQuest or mobName))
+    if cooldownReady(key, 2.2) then
+        local callOk = select(1, startQuestFromData(questData))
+        task.wait(0.05)
+        local nowHasRightQuest = isQuestActiveForMob(mobName)
+        if callOk and nowHasRightQuest then
+            acted = true
+            local noticeKey = "quest_started_notice_" .. slugify(mobName ~= "" and mobName or tostring(questData.NameQuest or "quest"))
+            if cooldownReady(noticeKey, 7) then
+                pushEvent("quest start: " .. (mobName ~= "" and mobName or tostring(questData.NameQuest)))
+            end
+        else
+            if isAnyQuestActive() and cooldownReady("quest_abandon", 6) then
+                local dropped = abandonQuest()
+                acted = dropped or acted
+                if dropped then
+                    pushEvent("quest abandon")
+                    task.wait(0.05)
+                end
+            end
+
+            local retryOk = select(1, startQuestFromData(questData))
+            task.wait(0.05)
+            if retryOk and isQuestActiveForMob(mobName) then
+                acted = true
+            else
+                local promptOk, count = runPromptByKeywords(QUEST_KEYS, 2)
+                acted = promptOk or acted
+                if count > 0 then
+                    addAction("quest prompt x" .. tostring(count), count)
+                end
+            end
+        end
+    end
+    return acted
+end
+
 local function bringEnemies(all)
     local root = getRoot()
     if not root then
@@ -1570,12 +1970,24 @@ local function runAutoFarm(item)
     local route = getRouteForLevel(level)
     local stage = getCombatStage(level)
     local settings = stageSettings(stage, item)
+    local questData = getQuestDataForLevel(level)
+    local wantsQuestFlow = hasWord(item, "quest") or hasWord(item, "farm level") or hasWord(item, "inteligente")
 
     if hasWord(item, "afk") then
         ensureAntiAfk()
         acted = true
     end
-    if hasWord(item, "quest") then
+    if wantsQuestFlow and questData then
+        acted = ensureQuestForAutoFarm(questData, route, settings) or acted
+    elseif wantsQuestFlow then
+        local ok, c = runPromptByKeywords(QUEST_KEYS, 2)
+        acted = ok or acted
+        if c > 0 then
+            addAction("quest x" .. tostring(c), c)
+        elseif cooldownReady("quest_module_missing_notice", 18) then
+            safeNotify("AutoHub", "QuestIlha.lua nao carregado (modo fallback)")
+        end
+    elseif hasWord(item, "quest") then
         local ok, c = runPromptByKeywords(QUEST_KEYS, 2)
         acted = ok or acted
         if c > 0 then
@@ -1584,8 +1996,11 @@ local function runAutoFarm(item)
     end
 
     local target = nil
+    if questData and questData.Mon then
+        target = nearestEnemy(280, false, tostring(questData.Mon))
+    end
     local manualMob = trim(State.config.mobKeyword)
-    if hasWord(item, "selecao de mob") and manualMob ~= "" then
+    if not target and hasWord(item, "selecao de mob") and manualMob ~= "" then
         target = nearestEnemy(220, false, manualMob)
     end
     if not target then
@@ -1628,7 +2043,10 @@ local function runAutoFarm(item)
             acted = bringEnemies(false) or acted
         end
     else
-        if hasWord(item, "inteligente") then
+        local mobCF = toCFrame(questData and questData.CFrameMon)
+        if mobCF and wantsQuestFlow then
+            acted = moveToCFrame(mobCF * CFrame.new(0, settings.safeDist + 2, 0), settings.useTween or (route and route.complex)) or acted
+        elseif hasWord(item, "inteligente") then
             acted = runTeleportCycle(route and route.complex) or acted
         elseif hasWord(item, "farm level") then
             acted = runTeleportCycle(stage ~= "early") or acted
@@ -1754,7 +2172,7 @@ local function runCombate(item)
     local target = nearestEnemy(170, false, nil)
 
     if target then
-        if hasWord(item, "auto aim") then
+        if hasWord(item, "auto aim skill") then
             local root = getRoot()
             if root and target:FindFirstChild("HumanoidRootPart") then
                 root.CFrame = CFrame.lookAt(root.Position, target.HumanoidRootPart.Position)
@@ -1879,6 +2297,7 @@ end
 local function runTeleport(item)
     local level = getPlayerLevel()
     local route = getRouteForLevel(level)
+    local questData = getQuestDataForLevel(level)
 
     if hasWord(item, "bring all mobs") then
         return bringEnemies(true)
@@ -1910,6 +2329,10 @@ local function runTeleport(item)
         return false
     end
     if hasWord(item, "teleport island") then
+        local routeCF = toCFrame(questData and (questData.CFrameMon or questData.CFrameQuest))
+        if routeCF then
+            return moveToCFrame(routeCF * CFrame.new(0, 12, 0), false)
+        end
         local island = nearestIsland(4000)
         if route and route.island then
             island = getNearest(State.perception.islands, 6000, function(obj)
@@ -2127,7 +2550,7 @@ local function runAvancadas(item)
         local part = island:IsA("BasePart") and island or island:FindFirstChild("HumanoidRootPart")
         if part then
             moveToCFrame(part.CFrame + Vector3.new(0, 10, 0), true)
-            pushEvent(item.name .. ": " .. island.Name)
+            pushEvent(item.name .. ": " .. (island and island.Name or "unknown"))
             return true
         end
     end
@@ -2249,7 +2672,7 @@ local function setCategory(categoryId)
         return
     end
     State.config.selectedCategory = categoryId
-    if State.ui.categoryTitle then
+    if State.ui.categoryTitle ~= nil then
         State.ui.categoryTitle.Text = State.categoryLookup[categoryId].label
     end
     updateCategoryButtonVisual(categoryId)
@@ -2722,10 +3145,13 @@ local function refreshStatusText()
     local level = getPlayerLevel()
     local route = getRouteForLevel(level)
     local stage = getCombatStage(level)
+    local questData = getQuestDataForLevel(level)
+    local mobName = questData and tostring(questData.Mon or "-") or "-"
     if State.ui.footer then
         State.ui.footer.Text = "Uptime: " .. tostring(uptime)
             .. "s | Lv: " .. tostring(level)
             .. " | " .. tostring(route and route.island or "-")
+            .. " | Mob: " .. mobName
             .. " | " .. tostring(stage)
             .. " | Active: " .. tostring(State.activeCount)
             .. " | Actions: " .. tostring(State.stats.actions)
@@ -2753,7 +3179,9 @@ local function cleanup()
         end)
     end
     pcall(function()
-        getgenv().AutoHubV6Loaded = nil
+        if _G.getgenv then
+            _G.getgenv().AutoHubV6Loaded = nil
+        end
     end)
 end
 
