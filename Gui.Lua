@@ -391,6 +391,42 @@ local ISLAND_KEYS = {
     "great tree", "floating turtle", "haunted castle", "sea of treats", "mirage",
 }
 
+local LEVEL_ROUTES = {
+    -- First Sea
+    { min = 1, max = 10, sea = "First Sea", island = "Starter Island", targets = { "bandit", "trainee" }, stage = "early", complex = false, group = false },
+    { min = 10, max = 30, sea = "First Sea", island = "Jungle", targets = { "monkey", "gorilla", "gorilla king" }, stage = "early", complex = false, group = true },
+    { min = 30, max = 60, sea = "First Sea", island = "Pirate Village", targets = { "pirate", "brute", "bobby" }, stage = "early", complex = false, group = true },
+    { min = 60, max = 90, sea = "First Sea", island = "Desert", targets = { "desert bandit", "desert officer" }, stage = "early", complex = false, group = false },
+    { min = 90, max = 120, sea = "First Sea", island = "Frozen Village", targets = { "snow bandit", "snowman", "yeti" }, stage = "early", complex = false, group = false },
+    { min = 120, max = 150, sea = "First Sea", island = "Marine Fortress", targets = { "chief petty officer", "vice admiral" }, stage = "early", complex = false, group = false },
+    { min = 150, max = 200, sea = "First Sea", island = "Sky Islands", targets = { "sky bandit", "dark master", "god's guard" }, stage = "early", complex = true, group = false },
+    { min = 190, max = 275, sea = "First Sea", island = "Prison", targets = { "prisoner", "dangerous prisoner", "warden", "chief warden", "swan" }, stage = "early", complex = false, group = true },
+    { min = 225, max = 300, sea = "First Sea", island = "Colosseum", targets = { "toga warrior", "gladiator" }, stage = "early", complex = false, group = true },
+    { min = 300, max = 375, sea = "First Sea", island = "Magma Village", targets = { "military soldier", "military spy", "magma admiral" }, stage = "early", complex = false, group = false },
+    { min = 375, max = 450, sea = "First Sea", island = "Underwater City", targets = { "fishman warrior", "fishman commando", "fishman lord" }, stage = "early", complex = false, group = false },
+    { min = 450, max = 700, sea = "First Sea", island = "Fountain City", targets = { "galley pirate", "galley captain", "cyborg" }, stage = "early", complex = false, group = true },
+
+    -- Second Sea
+    { min = 700, max = 850, sea = "Second Sea", island = "Kingdom of Rose", targets = { "raider", "mercenary" }, stage = "mid", complex = false, group = true },
+    { min = 850, max = 950, sea = "Second Sea", island = "Green Zone", targets = { "marine captain", "marine lieutenant", "swan pirate" }, stage = "mid", complex = false, group = true },
+    { min = 950, max = 1000, sea = "Second Sea", island = "Graveyard", targets = { "zombie", "vampire" }, stage = "mid", complex = false, group = true },
+    { min = 1000, max = 1100, sea = "Second Sea", island = "Snow Mountain", targets = { "snow trooper", "winter warrior" }, stage = "mid", complex = false, group = false },
+    { min = 1100, max = 1250, sea = "Second Sea", island = "Hot and Cold", targets = { "lab subordinate", "horned warrior", "magma ninja" }, stage = "mid", complex = true, group = false },
+    { min = 1250, max = 1350, sea = "Second Sea", island = "Cursed Ship", targets = { "ship deckhand", "ship engineer", "ship steward", "ship officer" }, stage = "mid", complex = true, group = true },
+    { min = 1350, max = 1425, sea = "Second Sea", island = "Ice Castle", targets = { "arctic warrior", "snow lurker", "awakened ice admiral" }, stage = "mid", complex = false, group = false },
+    { min = 1425, max = 1500, sea = "Second Sea", island = "Forgotten Island", targets = { "sea soldier", "water fighter", "tide keeper" }, stage = "mid", complex = false, group = true },
+
+    -- Third Sea
+    { min = 1500, max = 1575, sea = "Third Sea", island = "Port Town", targets = { "pirate millionaire", "pistol billionaire", "stone" }, stage = "late", complex = false, group = false },
+    { min = 1575, max = 1700, sea = "Third Sea", island = "Hydra Island", targets = { "dragon crew warrior", "dragon crew archer", "hydra leader" }, stage = "late", complex = true, group = false },
+    { min = 1700, max = 1775, sea = "Third Sea", island = "Great Tree", targets = { "marine commodore", "marine rear admiral", "kilo admiral" }, stage = "late", complex = false, group = false },
+    { min = 1775, max = 2000, sea = "Third Sea", island = "Floating Turtle", targets = { "fishman raider", "fishman captain", "jungle pirate", "musketeer pirate" }, stage = "late", complex = true, group = true },
+    { min = 2000, max = 2100, sea = "Third Sea", island = "Haunted Castle", targets = { "reborn skeleton", "living zombie", "demonic soul", "possessed mummy", "soul reaper" }, stage = "late", complex = false, group = true },
+    { min = 2100, max = 2300, sea = "Third Sea", island = "Sea of Treats", targets = { "peanut scout", "peanut president", "ice cream chef", "ice cream commander", "cookie crafter", "cake guard" }, stage = "endgame", complex = false, group = true },
+    { min = 2300, max = 2550, sea = "Third Sea", island = "Sea of Treats", targets = { "baking staff", "head baker", "cocoa warrior", "chocolate bar battler", "sweet thief", "candy rebel" }, stage = "endgame", complex = false, group = true },
+    { min = 2550, max = 9999, sea = "Third Sea", island = "Sea of Treats", targets = { "candy pirate", "chocolate warrior", "cake queen", "dough king", "rip_indra", "leviathan" }, stage = "endgame", complex = false, group = true },
+}
+
 local State = {
     running = true,
     startedAt = os.clock(),
@@ -1293,6 +1329,113 @@ local function nearestIsland(maxDist)
     return getNearest(State.perception.islands, maxDist or 3000, nil)
 end
 
+local function getPlayerLevel()
+    local data = LocalPlayer:FindFirstChild("Data")
+    if data and data:FindFirstChild("Level") then
+        return tonumber(data.Level.Value) or 1
+    end
+    local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
+    if leaderstats and leaderstats:FindFirstChild("Level") then
+        return tonumber(leaderstats.Level.Value) or 1
+    end
+    return 1
+end
+
+local function getRouteForLevel(level)
+    local lv = level or getPlayerLevel()
+    for _, route in ipairs(LEVEL_ROUTES) do
+        if lv >= route.min and lv <= route.max then
+            return route
+        end
+    end
+    return LEVEL_ROUTES[#LEVEL_ROUTES]
+end
+
+local function getCombatStage(level)
+    local lv = level or getPlayerLevel()
+    if lv < 700 then
+        return "early"
+    elseif lv < 1500 then
+        return "mid"
+    elseif lv < 2100 then
+        return "late"
+    end
+    return "endgame"
+end
+
+local function getHealthRatio()
+    local hum = getHumanoid()
+    if not hum or hum.MaxHealth <= 0 then
+        return 1
+    end
+    return hum.Health / hum.MaxHealth
+end
+
+local function shouldRetreat(stage)
+    local hp = getHealthRatio()
+    if stage == "early" then
+        return hp < 0.14
+    elseif stage == "mid" then
+        return hp < 0.20
+    elseif stage == "late" then
+        return hp < 0.27
+    end
+    return hp < 0.33
+end
+
+local function retreatFromCombat()
+    local root = getRoot()
+    if not root then
+        return false
+    end
+    return moveToCFrame(root.CFrame * CFrame.new(0, 30, 0), false)
+end
+
+local function nearestEnemyByKeywords(keys, maxDist)
+    local normalized = normalizeKeywordList(keys or {})
+    if #normalized == 0 then
+        return nearestEnemy(maxDist or 180, false, nil)
+    end
+    return getNearest(State.perception.enemies, maxDist or 180, function(model)
+        return containsAny(string.lower(model.Name), normalized)
+    end)
+end
+
+local function stageSettings(stage, item)
+    local safeDist = 6
+    local useTween = hasWord(item, "pathfinding")
+    local skillBurst = hasWord(item, "skills automaticas")
+    local retreating = false
+
+    if stage == "mid" then
+        safeDist = 8
+        skillBurst = true
+    elseif stage == "late" then
+        safeDist = 10
+        skillBurst = true
+        retreating = true
+    elseif stage == "endgame" then
+        safeDist = 12
+        skillBurst = true
+        retreating = true
+    end
+
+    if categoryPhraseEnabled("auto_farm", "distancia segura") then
+        safeDist = safeDist + 2
+    end
+
+    if categoryPhraseEnabled("auto_farm", "pathfinding") then
+        useTween = true
+    end
+
+    return {
+        safeDist = safeDist,
+        useTween = useTween,
+        skillBurst = skillBurst,
+        retreating = retreating,
+    }
+end
+
 local function bringEnemies(all)
     local root = getRoot()
     if not root then
@@ -1423,6 +1566,10 @@ end
 
 local function runAutoFarm(item)
     local acted = false
+    local level = getPlayerLevel()
+    local route = getRouteForLevel(level)
+    local stage = getCombatStage(level)
+    local settings = stageSettings(stage, item)
 
     if hasWord(item, "afk") then
         ensureAntiAfk()
@@ -1436,11 +1583,23 @@ local function runAutoFarm(item)
         end
     end
 
-    local pattern = nil
-    if hasWord(item, "selecao de mob") then
-        pattern = trim(State.config.mobKeyword)
+    local target = nil
+    local manualMob = trim(State.config.mobKeyword)
+    if hasWord(item, "selecao de mob") and manualMob ~= "" then
+        target = nearestEnemy(220, false, manualMob)
     end
-    local target = nearestEnemy(190, false, pattern)
+    if not target then
+        target = nearestEnemyByKeywords(route and route.targets or {}, 220)
+    end
+    if not target then
+        target = nearestEnemy(220, false, nil)
+    end
+
+    if shouldRetreat(stage) and (hasWord(item, "deteccao de hp") or settings.retreating) then
+        acted = retreatFromCombat() or acted
+        pushEvent("recuo: hp baixo")
+        return acted
+    end
 
     if target then
         local hum = target:FindFirstChildOfClass("Humanoid")
@@ -1448,11 +1607,8 @@ local function runAutoFarm(item)
             return acted
         end
 
-        local safeDist = categoryPhraseEnabled("auto_farm", "distancia segura") and 10 or 6
         local behind = hasWord(item, "posicionamento atras")
-        local useTween = hasWord(item, "pathfinding")
-
-        acted = moveNearModel(target, safeDist, useTween, behind) or acted
+        acted = moveNearModel(target, settings.safeDist, settings.useTween or (route and route.complex), behind) or acted
 
         if hasWord(item, "fruta especifica") then
             acted = activateTool(equipToolByKeywords({ State.config.fruitKeyword, "fruit", "blox" })) or acted
@@ -1465,19 +1621,36 @@ local function runAutoFarm(item)
         if hasWord(item, "ataque automatico") or hasWord(item, "inimigo") or hasWord(item, "farm level") then
             acted = activateTool(equipAnyTool()) or acted
         end
-        if hasWord(item, "skills automaticas") then
+        if hasWord(item, "skills automaticas") or settings.skillBurst then
             acted = pressSkillKeys() or acted
+        end
+        if route and route.group and (hasWord(item, "farm level") or hasWord(item, "inimigo")) then
+            acted = bringEnemies(false) or acted
         end
     else
         if hasWord(item, "inteligente") then
-            acted = runTeleportCycle(true) or acted
+            acted = runTeleportCycle(route and route.complex) or acted
+        elseif hasWord(item, "farm level") then
+            acted = runTeleportCycle(stage ~= "early") or acted
         end
+    end
+
+    if route and cooldownReady("route_notice", 8) then
+        pushEvent("rota: " .. route.sea .. " | " .. route.island .. " (lv " .. tostring(level) .. ")")
     end
 
     return acted
 end
 
 local function runBoss(item)
+    local level = getPlayerLevel()
+    local stage = getCombatStage(level)
+    local safeDist = (stage == "early" and 10) or (stage == "mid" and 12) or (stage == "late" and 14) or 16
+
+    if shouldRetreat(stage) then
+        return retreatFromCombat()
+    end
+
     local pattern = trim(State.config.bossKeyword)
     if hasWord(item, "saber") then
         pattern = "saber"
@@ -1507,8 +1680,11 @@ local function runBoss(item)
     end
 
     if boss then
-        local moved = moveNearModel(boss, 12, false, false)
+        local moved = moveNearModel(boss, safeDist, stage ~= "early", false)
         local atk = activateTool(equipAnyTool())
+        if stage ~= "early" then
+            pressSkillKeys()
+        end
         return moved or atk
     end
 
@@ -1701,6 +1877,9 @@ local function runHaki(item)
 end
 
 local function runTeleport(item)
+    local level = getPlayerLevel()
+    local route = getRouteForLevel(level)
+
     if hasWord(item, "bring all mobs") then
         return bringEnemies(true)
     end
@@ -1732,6 +1911,11 @@ local function runTeleport(item)
     end
     if hasWord(item, "teleport island") then
         local island = nearestIsland(4000)
+        if route and route.island then
+            island = getNearest(State.perception.islands, 6000, function(obj)
+                return string.find(string.lower(obj.Name), string.lower(route.island), 1, true) ~= nil
+            end) or island
+        end
         if island then
             local part = island:IsA("BasePart") and island or island:FindFirstChild("HumanoidRootPart")
             if part then
@@ -2535,9 +2719,15 @@ end
 
 local function refreshStatusText()
     local uptime = math.floor(now() - State.startedAt)
+    local level = getPlayerLevel()
+    local route = getRouteForLevel(level)
+    local stage = getCombatStage(level)
     if State.ui.footer then
         State.ui.footer.Text = "Uptime: " .. tostring(uptime)
-            .. "s | Active: " .. tostring(State.activeCount)
+            .. "s | Lv: " .. tostring(level)
+            .. " | " .. tostring(route and route.island or "-")
+            .. " | " .. tostring(stage)
+            .. " | Active: " .. tostring(State.activeCount)
             .. " | Actions: " .. tostring(State.stats.actions)
             .. " | Errors: " .. tostring(State.stats.errors)
             .. " | Last: " .. tostring(State.stats.last)
@@ -2686,4 +2876,3 @@ task.spawn(function()
     end
     cleanup()
 end)
-
