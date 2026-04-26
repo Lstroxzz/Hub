@@ -574,8 +574,8 @@ local function createUI()
     gui.Parent = PlayerGui
 
     local main = Instance.new("Frame")
-    main.Size = UDim2.new(0, 760, 0, 430)
-    main.Position = UDim2.new(0.5, -380, 0.5, -215)
+    main.Size = UDim2.new(0, 620, 0, 350)
+    main.Position = UDim2.new(0.5, -310, 0.5, -175)
     main.BackgroundColor3 = Theme.bg
     main.Parent = gui
     corner(main, 12)
@@ -590,47 +590,47 @@ local function createUI()
     grad.Parent = main
 
     local header = Instance.new("Frame")
-    header.Size = UDim2.new(1, 0, 0, 36)
+    header.Size = UDim2.new(1, 0, 0, 32)
     header.BackgroundTransparency = 1
     header.Parent = main
 
     local logo = Instance.new("TextLabel")
-    logo.Size = UDim2.new(0, 24, 0, 24)
-    logo.Position = UDim2.new(0, 8, 0, 6)
+    logo.Size = UDim2.new(0, 20, 0, 20)
+    logo.Position = UDim2.new(0, 7, 0, 6)
     logo.BackgroundTransparency = 1
     logo.Font = Enum.Font.GothamBold
     logo.Text = "@"
-    logo.TextSize = 16
+    logo.TextSize = 14
     logo.TextColor3 = Theme.accent
     logo.Parent = header
 
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(0, 280, 0, 20)
-    title.Position = UDim2.new(0, 34, 0, 8)
+    title.Size = UDim2.new(0, 240, 0, 18)
+    title.Position = UDim2.new(0, 30, 0, 7)
     title.BackgroundTransparency = 1
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 14
+    title.TextSize = 12
     title.TextColor3 = Theme.text
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Text = "AutoHub Compact " .. SCRIPT_VERSION
     title.Parent = header
 
     local subtitle = Instance.new("TextLabel")
-    subtitle.Size = UDim2.new(0, 220, 0, 16)
-    subtitle.Position = UDim2.new(0.5, -110, 0, 10)
+    subtitle.Size = UDim2.new(0, 180, 0, 14)
+    subtitle.Position = UDim2.new(0.5, -90, 0, 9)
     subtitle.BackgroundTransparency = 1
     subtitle.Font = Enum.Font.Gotham
-    subtitle.TextSize = 11
+    subtitle.TextSize = 10
     subtitle.TextColor3 = Theme.muted
-    subtitle.Text = "Farming"
+    subtitle.Text = "Farming | END = Hide/Show"
     subtitle.Parent = header
 
     local close = Instance.new("TextButton")
-    close.Size = UDim2.new(0, 28, 0, 22)
-    close.Position = UDim2.new(1, -34, 0, 7)
+    close.Size = UDim2.new(0, 24, 0, 20)
+    close.Position = UDim2.new(1, -30, 0, 6)
     close.Text = "X"
     close.Font = Enum.Font.GothamBold
-    close.TextSize = 12
+    close.TextSize = 11
     close.TextColor3 = Theme.text
     close.BackgroundColor3 = Color3.fromRGB(45, 26, 36)
     close.Parent = header
@@ -638,20 +638,20 @@ local function createUI()
     stroke(close)
 
     local sidebar = Instance.new("Frame")
-    sidebar.Size = UDim2.new(0, 180, 1, -42)
-    sidebar.Position = UDim2.new(0, 6, 0, 36)
+    sidebar.Size = UDim2.new(0, 150, 1, -38)
+    sidebar.Position = UDim2.new(0, 6, 0, 32)
     sidebar.BackgroundColor3 = Theme.panel
     sidebar.Parent = main
     corner(sidebar, 10)
     stroke(sidebar)
 
     local search = Instance.new("TextBox")
-    search.Size = UDim2.new(1, -12, 0, 24)
+    search.Size = UDim2.new(1, -12, 0, 22)
     search.Position = UDim2.new(0, 6, 0, 6)
     search.PlaceholderText = "Search section or fun"
     search.Text = ""
     search.Font = Enum.Font.Gotham
-    search.TextSize = 11
+    search.TextSize = 10
     search.TextColor3 = Theme.text
     search.PlaceholderColor3 = Theme.muted
     search.BackgroundColor3 = Theme.panel2
@@ -673,11 +673,11 @@ local function createUI()
     local menuButtons = {}
     for i, name in ipairs(menuItems) do
         local b = Instance.new("TextButton")
-        b.Size = UDim2.new(1, -12, 0, 24)
-        b.Position = UDim2.new(0, 6, 0, 34 + ((i - 1) * 26))
+        b.Size = UDim2.new(1, -12, 0, 21)
+        b.Position = UDim2.new(0, 6, 0, 32 + ((i - 1) * 23))
         b.Text = "  " .. name
         b.Font = Enum.Font.Gotham
-        b.TextSize = 11
+        b.TextSize = 10
         b.TextColor3 = Theme.text
         b.TextXAlignment = Enum.TextXAlignment.Left
         b.BackgroundColor3 = (name == "Farming") and Theme.row or Theme.panel
@@ -694,30 +694,30 @@ local function createUI()
     end
 
     local content = Instance.new("Frame")
-    content.Size = UDim2.new(1, -194, 1, -42)
-    content.Position = UDim2.new(0, 188, 0, 36)
+    content.Size = UDim2.new(1, -162, 1, -38)
+    content.Position = UDim2.new(0, 156, 0, 32)
     content.BackgroundColor3 = Theme.panel
     content.Parent = main
     corner(content, 10)
     stroke(content)
 
     local contentHeader = Instance.new("TextLabel")
-    contentHeader.Size = UDim2.new(1, -12, 0, 24)
+    contentHeader.Size = UDim2.new(1, -12, 0, 20)
     contentHeader.Position = UDim2.new(0, 8, 0, 6)
     contentHeader.BackgroundTransparency = 1
     contentHeader.Font = Enum.Font.GothamBold
-    contentHeader.TextSize = 13
+    contentHeader.TextSize = 12
     contentHeader.TextColor3 = Theme.text
     contentHeader.TextXAlignment = Enum.TextXAlignment.Left
     contentHeader.Text = "Farming"
     contentHeader.Parent = content
 
     local status = Instance.new("TextLabel")
-    status.Size = UDim2.new(1, -12, 0, 16)
-    status.Position = UDim2.new(0, 8, 0, 26)
+    status.Size = UDim2.new(1, -12, 0, 14)
+    status.Position = UDim2.new(0, 8, 0, 22)
     status.BackgroundTransparency = 1
     status.Font = Enum.Font.Gotham
-    status.TextSize = 10
+    status.TextSize = 9
     status.TextColor3 = Theme.muted
     status.TextXAlignment = Enum.TextXAlignment.Left
     status.Text = "Uptime: 0s | Acoes: 0 | Erros: 0 | Last: idle"
@@ -725,8 +725,8 @@ local function createUI()
     State.labels.status = status
 
     local list = Instance.new("ScrollingFrame")
-    list.Size = UDim2.new(1, -8, 1, -52)
-    list.Position = UDim2.new(0, 4, 0, 46)
+    list.Size = UDim2.new(1, -8, 1, -42)
+    list.Position = UDim2.new(0, 4, 0, 38)
     list.CanvasSize = UDim2.new(0, 0, 0, 0)
     list.BackgroundTransparency = 1
     list.ScrollBarThickness = 4
@@ -735,7 +735,7 @@ local function createUI()
     local y = 0
     for i, feature in ipairs(Features) do
         local row = Instance.new("Frame")
-        row.Size = UDim2.new(1, -8, 0, 30)
+        row.Size = UDim2.new(1, -8, 0, 26)
         row.Position = UDim2.new(0, 4, 0, y)
         row.BackgroundColor3 = Theme.row
         row.Parent = list
@@ -743,18 +743,18 @@ local function createUI()
         stroke(row, Color3.fromRGB(28, 40, 70))
 
         local dot = Instance.new("Frame")
-        dot.Size = UDim2.new(0, 8, 0, 8)
-        dot.Position = UDim2.new(0, 8, 0.5, -4)
+        dot.Size = UDim2.new(0, 7, 0, 7)
+        dot.Position = UDim2.new(0, 7, 0.5, -3)
         dot.BackgroundColor3 = Theme.off
         dot.Parent = row
         corner(dot, 4)
 
         local name = Instance.new("TextLabel")
-        name.Size = UDim2.new(1, -130, 1, 0)
-        name.Position = UDim2.new(0, 22, 0, 0)
+        name.Size = UDim2.new(1, -118, 1, 0)
+        name.Position = UDim2.new(0, 18, 0, 0)
         name.BackgroundTransparency = 1
         name.Font = Enum.Font.Gotham
-        name.TextSize = 11
+        name.TextSize = 10
         name.TextColor3 = Theme.text
         name.TextXAlignment = Enum.TextXAlignment.Left
         name.Text = feature.title
@@ -762,19 +762,19 @@ local function createUI()
 
         local arrow = Instance.new("TextLabel")
         arrow.Size = UDim2.new(0, 14, 1, 0)
-        arrow.Position = UDim2.new(1, -74, 0, 0)
+        arrow.Position = UDim2.new(1, -68, 0, 0)
         arrow.BackgroundTransparency = 1
         arrow.Font = Enum.Font.GothamBold
-        arrow.TextSize = 10
+        arrow.TextSize = 9
         arrow.TextColor3 = Theme.muted
         arrow.Text = ">"
         arrow.Parent = row
 
         local toggle = Instance.new("TextButton")
-        toggle.Size = UDim2.new(0, 52, 0, 20)
-        toggle.Position = UDim2.new(1, -58, 0.5, -10)
+        toggle.Size = UDim2.new(0, 44, 0, 18)
+        toggle.Position = UDim2.new(1, -50, 0.5, -9)
         toggle.Font = Enum.Font.GothamBold
-        toggle.TextSize = 10
+        toggle.TextSize = 9
         toggle.TextColor3 = Theme.text
         toggle.Parent = row
         corner(toggle, 6)
@@ -788,7 +788,7 @@ local function createUI()
         State.rows[feature.id] = { row = row, toggle = toggle, dot = dot }
         updateRowVisual(feature.id)
 
-        y = y + 32
+        y = y + 28
         if i == 1 then
             row.BackgroundColor3 = Color3.fromRGB(16, 23, 40)
         end
@@ -805,7 +805,7 @@ local function createUI()
         if gp then
             return
         end
-        if input.KeyCode == Enum.KeyCode.RightShift then
+        if input.KeyCode == Enum.KeyCode.End then
             State.uiVisible = not State.uiVisible
             main.Visible = State.uiVisible
         end
