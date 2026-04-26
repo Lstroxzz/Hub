@@ -1,10 +1,17 @@
 --[[
-    AutoHub Organized UI (V5)
+    AutoHub Organized UI (V6)
     Compact + draggable + END to hide/show
 ]]
 
 pcall(function()
-    local pg = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local player = game:GetService("Players").LocalPlayer
+    if not player then
+        return
+    end
+    local pg = player:FindFirstChild("PlayerGui")
+    if not pg then
+        return
+    end
     for _, child in ipairs(pg:GetChildren()) do
         if child:IsA("ScreenGui") then
             local lower = string.lower(child.Name)
@@ -21,12 +28,13 @@ pcall(function()
     getgenv().AutoHubGridLoaded = nil
     getgenv().AutoHubCompactLoaded = nil
     getgenv().AutoHubV5Loaded = nil
+    getgenv().AutoHubV6Loaded = nil
 end)
 
-if getgenv().AutoHubV5Loaded then
+if getgenv().AutoHubV6Loaded then
     return
 end
-getgenv().AutoHubV5Loaded = true
+getgenv().AutoHubV6Loaded = true
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -40,14 +48,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 local VirtualUser = game:GetService("VirtualUser")
 
-local hasVim, VirtualInputManager = pcall(function()
+local hasVIM, VirtualInputManager = pcall(function()
     return game:GetService("VirtualInputManager")
 end)
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-local VERSION = "V5-2026-04-26"
+local VERSION = "V6-2026-04-26"
 local GUI_NAME = "AutoHub_Organized_" .. VERSION
 local SAVE_FILE = "autohub_organized_config.json"
 
@@ -75,7 +83,7 @@ local CategoryDefs = {
             "Auto Farm Level",
             "Auto Farm (inimigo mais proximo)",
             "Auto Farm por selecao de mob",
-            "Auto Quest",
+            "Auto Quest (aceitar/completar/entregar)",
             "Auto Farm com arma especifica",
             "Auto Farm com fruta especifica",
             "Auto Farm com fighting style",
@@ -110,7 +118,7 @@ local CategoryDefs = {
     {
         id = "frutas",
         label = "Frutas",
-        interval = 2.0,
+        interval = 1.8,
         items = {
             "Auto Buy Fruit",
             "Auto Store Fruit",
@@ -153,7 +161,7 @@ local CategoryDefs = {
     {
         id = "espadas",
         label = "Espadas",
-        interval = 1.2,
+        interval = 1.1,
         items = {
             "Auto Sword Mastery",
             "Auto Equip Sword",
@@ -176,7 +184,7 @@ local CategoryDefs = {
     {
         id = "raca",
         label = "Raca",
-        interval = 2.2,
+        interval = 2.1,
         items = {
             "Auto Race V2",
             "Auto Race V3",
@@ -190,7 +198,7 @@ local CategoryDefs = {
     {
         id = "haki",
         label = "Haki",
-        interval = 1.1,
+        interval = 1.0,
         items = {
             "Auto Enhancement (Aura)",
             "Auto Observation Haki",
@@ -202,7 +210,7 @@ local CategoryDefs = {
     {
         id = "teleport",
         label = "Teleport / Movimento",
-        interval = 1.9,
+        interval = 1.8,
         items = {
             "Teleport Island",
             "Teleport NPC",
@@ -218,7 +226,7 @@ local CategoryDefs = {
     {
         id = "player_mods",
         label = "Player Mods",
-        interval = 0.2,
+        interval = 0.22,
         items = {
             "Walk Speed",
             "Jump Power",
@@ -233,7 +241,7 @@ local CategoryDefs = {
     {
         id = "esp_visual",
         label = "ESP (Visual)",
-        interval = 1.3,
+        interval = 0.9,
         items = {
             "Player ESP",
             "Enemy ESP",
@@ -252,7 +260,7 @@ local CategoryDefs = {
     {
         id = "recursos",
         label = "Recursos",
-        interval = 0.65,
+        interval = 0.6,
         items = {
             "Auto Chest",
             "Auto Collect",
@@ -279,7 +287,7 @@ local CategoryDefs = {
     {
         id = "inteligencia",
         label = "Inteligencia / Deteccao",
-        interval = 4.0,
+        interval = 3.0,
         items = {
             "Detect Player Nearby",
             "Detect Admin",
@@ -292,7 +300,7 @@ local CategoryDefs = {
     {
         id = "misc",
         label = "Misc",
-        interval = 4.0,
+        interval = 2.8,
         items = {
             "Full Bright",
             "Remove Fog",
@@ -305,7 +313,7 @@ local CategoryDefs = {
     {
         id = "stats",
         label = "Stats",
-        interval = 2.1,
+        interval = 2.0,
         items = {
             "Auto Stats",
             "Auto Melee",
@@ -318,7 +326,7 @@ local CategoryDefs = {
     {
         id = "interface_tools",
         label = "Interface (GUI)",
-        interval = 3.0,
+        interval = 2.5,
         items = {
             "Toggle Button",
             "Dropdown Select",
@@ -331,7 +339,7 @@ local CategoryDefs = {
     {
         id = "sistema_core",
         label = "Sistema",
-        interval = 4.5,
+        interval = 4.0,
         items = {
             "Key System",
             "Script Hub",
@@ -344,7 +352,7 @@ local CategoryDefs = {
     {
         id = "avancadas",
         label = "Especificas Avancadas",
-        interval = 2.3,
+        interval = 2.2,
         items = {
             "Auto Sea Event",
             "Auto Leviathan",
@@ -359,16 +367,27 @@ local CategoryDefs = {
     },
 }
 
-local BossKeywords = {
-    "boss", "saber", "don swan", "cake prince", "rip indra", "dough king", "tushita",
-    "soul reaper", "hydra", "elder turtle", "t-rex", "trex", "leviathan",
+local BOSS_KEYS = {
+    "boss", "elite", "saber", "don swan", "cake prince", "rip indra", "dough king",
+    "tushita", "soul reaper", "hydra", "elder turtle", "trex", "t-rex", "leviathan",
 }
 
-local IslandKeywords = {
-    "starter", "jungle", "pirate village", "desert", "frozen village", "marineford",
-    "sky", "prison", "colosseum", "magma", "underwater", "fountain",
-    "kingdom of rose", "green zone", "graveyard", "snow mountain", "hot and cold",
-    "cursed ship", "ice castle", "forgotten", "port town", "hydra island",
+local LOOT_KEYS = {
+    "chest", "drop", "loot", "coin", "reward", "fragment", "material", "ore", "scale", "scrap", "fruit",
+}
+
+local QUEST_KEYS = {
+    "quest", "mission", "giver", "npc",
+}
+
+local NPC_KEYS = {
+    "dealer", "quest", "trainer", "teacher", "npc", "blacksmith", "awak", "shop",
+}
+
+local ISLAND_KEYS = {
+    "starter", "jungle", "pirate", "desert", "frozen", "marine", "sky", "prison", "colosseum",
+    "magma", "underwater", "fountain", "kingdom", "green zone", "graveyard", "snow",
+    "hot and cold", "cursed", "ice castle", "forgotten", "port town", "hydra",
     "great tree", "floating turtle", "haunted castle", "sea of treats", "mirage",
 }
 
@@ -376,6 +395,7 @@ local State = {
     running = true,
     startedAt = os.clock(),
     items = {},
+    itemOrder = {},
     toggles = {},
     nextRun = {},
     categoryItems = {},
@@ -390,12 +410,10 @@ local State = {
     profileIndex = 1,
     lastNotifyAt = 0,
     uiVisible = true,
-    flags = {
-        requestRenderRows = false,
-    },
+    cooldowns = {},
     cache = {
-        lastBossNotice = "",
-        lastAdminNotice = 0,
+        lastBossSeen = "",
+        lastAdminSeen = "",
     },
     stats = {
         actions = 0,
@@ -403,12 +421,27 @@ local State = {
         last = "idle",
     },
     ui = {},
-    connections = {},
+    conns = {},
+    perception = {
+        enemies = {},
+        bosses = {},
+        prompts = {},
+        loot = {},
+        fruits = {},
+        islands = {},
+        players = {},
+        npcs = {},
+        lastScan = 0,
+    },
     config = {
         selectedCategory = "auto_farm",
         searchText = "",
         webhookUrl = "",
+        mobKeyword = "",
+        bossKeyword = "",
+        fruitKeyword = "",
         autosaveSeconds = 20,
+        threatDistance = 140,
         teleportPoints = {
             CFrame.new(0, 15, 0),
             CFrame.new(80, 15, 0),
@@ -416,6 +449,14 @@ local State = {
         },
     },
 }
+
+local function trim(s)
+    return (string.gsub(string.gsub(s or "", "^%s+", ""), "%s+$", ""))
+end
+
+local function now()
+    return os.clock()
+end
 
 local function slugify(text)
     local s = string.lower(text)
@@ -426,36 +467,72 @@ local function slugify(text)
     return s
 end
 
+local function resolveInterval(categoryId, lowerName, defaultInterval)
+    local interval = defaultInterval
+    if categoryId == "combate" then
+        interval = 0.14
+    elseif categoryId == "player_mods" then
+        interval = 0.12
+    elseif categoryId == "esp_visual" then
+        interval = 0.55
+    elseif categoryId == "server_runtime" then
+        interval = 8
+    elseif categoryId == "sistema_core" then
+        interval = 6
+    end
+    if string.find(lowerName, "spawn detector", 1, true) then
+        interval = 1.2
+    elseif string.find(lowerName, "server hop", 1, true) or string.find(lowerName, "rejoin", 1, true) then
+        interval = 12
+    elseif string.find(lowerName, "anti afk", 1, true) then
+        interval = 4
+    elseif string.find(lowerName, "config save", 1, true) or string.find(lowerName, "save config", 1, true) then
+        interval = 30
+    elseif string.find(lowerName, "config load", 1, true) or string.find(lowerName, "load config", 1, true) then
+        interval = 30
+    end
+    return interval
+end
+
 for _, cat in ipairs(CategoryDefs) do
     State.categoryLookup[cat.id] = cat
     table.insert(State.categoryOrder, cat.id)
     State.categoryItems[cat.id] = {}
-    for idx, itemName in ipairs(cat.items) do
-        local id = cat.id .. "__" .. slugify(itemName) .. "_" .. tostring(idx)
+    for idx, name in ipairs(cat.items) do
+        local id = cat.id .. ":" .. slugify(name) .. ":" .. tostring(idx)
+        local lower = string.lower(name)
+        local interval = resolveInterval(cat.id, lower, cat.interval)
         local item = {
             id = id,
-            name = itemName,
-            lower = string.lower(itemName),
+            name = name,
+            lower = lower,
             categoryId = cat.id,
-            interval = cat.interval,
+            interval = interval,
         }
         State.items[id] = item
+        table.insert(State.itemOrder, id)
+        table.insert(State.categoryItems[cat.id], id)
         State.toggles[id] = false
         State.nextRun[id] = 0
-        table.insert(State.categoryItems[cat.id], id)
     end
 end
 
-local function trim(s)
-    return (string.gsub(string.gsub(s or "", "^%s+", ""), "%s+$", ""))
+local function containsAny(text, keys)
+    local lower = string.lower(text or "")
+    for _, key in ipairs(keys) do
+        if string.find(lower, key, 1, true) then
+            return true
+        end
+    end
+    return false
 end
 
-local function now()
-    return os.clock()
+local function hasWord(item, phrase)
+    return string.find(item.lower, string.lower(phrase), 1, true) ~= nil
 end
 
 local function safeNotify(title, text)
-    if now() - State.lastNotifyAt < 1.2 then
+    if now() - State.lastNotifyAt < 1.1 then
         return
     end
     State.lastNotifyAt = now()
@@ -468,25 +545,34 @@ local function safeNotify(title, text)
     end)
 end
 
-local function pushEvent(text)
-    State.stats.last = text
+local function pushEvent(message)
+    State.stats.last = message
     table.insert(State.eventQueue, {
         t = os.time(),
-        m = text,
+        m = message,
     })
-    if #State.eventQueue > 120 then
+    if #State.eventQueue > 150 then
         table.remove(State.eventQueue, 1)
     end
 end
 
-local function addAction(label, amount)
-    State.stats.actions = State.stats.actions + (amount or 1)
-    State.stats.last = label
+local function addAction(message, count)
+    State.stats.actions = State.stats.actions + (count or 1)
+    State.stats.last = message
 end
 
-local function addError(label)
+local function addError(message)
     State.stats.errors = State.stats.errors + 1
-    State.stats.last = label
+    State.stats.last = message
+end
+
+local function cooldownReady(key, seconds)
+    local t = State.cooldowns[key] or 0
+    if now() - t >= seconds then
+        State.cooldowns[key] = now()
+        return true
+    end
+    return false
 end
 
 local function getCharacter()
@@ -509,23 +595,6 @@ local function getRoot()
     return char:FindFirstChild("HumanoidRootPart")
 end
 
-local function findBasePart(obj)
-    local current = obj
-    while current and not current:IsA("BasePart") do
-        current = current.Parent
-    end
-    return current
-end
-
-local function containsAny(lowerText, keywords)
-    for _, key in ipairs(keywords) do
-        if string.find(lowerText, key, 1, true) then
-            return true
-        end
-    end
-    return false
-end
-
 local function isEnemyModel(model)
     if not model or not model:IsA("Model") then
         return false
@@ -537,75 +606,58 @@ local function isEnemyModel(model)
         return false
     end
     local hum = model:FindFirstChildOfClass("Humanoid")
-    local root = model:FindFirstChild("HumanoidRootPart")
-    return hum ~= nil and root ~= nil and hum.Health > 0
+    local hrp = model:FindFirstChild("HumanoidRootPart")
+    return hum ~= nil and hrp ~= nil and hum.Health > 0
 end
 
-local function isBossName(lowerName)
-    return containsAny(lowerName, BossKeywords)
-end
-
-local function distanceTo(position)
+local function distanceToPos(pos)
     local root = getRoot()
     if not root then
         return math.huge
     end
-    return (root.Position - position).Magnitude
+    return (root.Position - pos).Magnitude
 end
 
-local function findNearestEnemy(maxDistance, bossOnly, explicitPattern)
+local function getObjPosition(obj)
+    if obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") then
+        return obj.HumanoidRootPart.Position
+    end
+    if obj:IsA("BasePart") then
+        return obj.Position
+    end
+    return nil
+end
+
+local function getNearest(list, maxDist, predicate)
     local root = getRoot()
     if not root then
         return nil
     end
-    local nearest = nil
-    local best = maxDistance or 150
-    local pattern = explicitPattern and string.lower(explicitPattern) or nil
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if isEnemyModel(obj) then
-            local lowerName = string.lower(obj.Name)
-            if (not bossOnly or isBossName(lowerName)) and (not pattern or string.find(lowerName, pattern, 1, true)) then
-                local dist = (root.Position - obj.HumanoidRootPart.Position).Magnitude
-                if dist < best then
-                    best = dist
-                    nearest = obj
+    local bestDist = maxDist or math.huge
+    local best = nil
+    for _, obj in ipairs(list) do
+        if obj and obj.Parent and (not predicate or predicate(obj)) then
+            local pos = getObjPosition(obj)
+            if pos then
+                local d = (root.Position - pos).Magnitude
+                if d < bestDist then
+                    bestDist = d
+                    best = obj
                 end
             end
         end
     end
-    return nearest
+    return best
 end
 
-local function teleportNearModel(model, backDistance, useTween)
-    local root = getRoot()
-    if not root or not model or not model:FindFirstChild("HumanoidRootPart") then
-        return false
-    end
-    local targetCFrame = model.HumanoidRootPart.CFrame * CFrame.new(0, 0, backDistance or 6)
-    local ok = pcall(function()
-        if useTween then
-            TweenService:Create(root, TweenInfo.new(0.18, Enum.EasingStyle.Linear), { CFrame = targetCFrame }):Play()
-        else
-            root.CFrame = targetCFrame
-        end
-    end)
-    return ok
-end
-
-local function runTeleportCycle(useTween)
+local function moveToCFrame(cf, tween)
     local root = getRoot()
     if not root then
         return false
     end
-    local points = State.config.teleportPoints
-    if #points == 0 then
-        return false
-    end
-    State.teleportIndex = (State.teleportIndex % #points) + 1
-    local cf = points[State.teleportIndex]
     local ok = pcall(function()
-        if useTween then
-            TweenService:Create(root, TweenInfo.new(0.22, Enum.EasingStyle.Linear), { CFrame = cf }):Play()
+        if tween then
+            TweenService:Create(root, TweenInfo.new(0.18, Enum.EasingStyle.Linear), { CFrame = cf }):Play()
         else
             root.CFrame = cf
         end
@@ -613,15 +665,148 @@ local function runTeleportCycle(useTween)
     return ok
 end
 
-local function activatePrompt(prompt)
+local function moveNearModel(model, distance, tween, behind)
+    if not model or not model:FindFirstChild("HumanoidRootPart") then
+        return false
+    end
+    local targetCF = model.HumanoidRootPart.CFrame
+    local dist = distance or 6
+    local offset = CFrame.new(0, 0, dist)
+    if behind then
+        offset = CFrame.new(0, 0, -dist)
+    end
+    return moveToCFrame(targetCF * offset, tween)
+end
+
+local function equipAnyTool()
+    local char = getCharacter()
+    if not char then
+        return nil
+    end
+    local equipped = char:FindFirstChildOfClass("Tool")
+    if equipped then
+        return equipped
+    end
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    if not backpack then
+        return nil
+    end
+    local t = backpack:FindFirstChildOfClass("Tool")
+    if t then
+        pcall(function()
+            t.Parent = char
+        end)
+    end
+    return t
+end
+
+local function normalizeKeywordList(list)
+    local out = {}
+    for _, value in ipairs(list) do
+        local text = trim(tostring(value or ""))
+        if text ~= "" then
+            table.insert(out, string.lower(text))
+        end
+    end
+    return out
+end
+
+local function equipToolByKeywords(keys)
+    local wanted = normalizeKeywordList(keys or {})
+    local char = getCharacter()
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    local containers = {}
+    if char then
+        table.insert(containers, char)
+    end
+    if backpack then
+        table.insert(containers, backpack)
+    end
+
+    local fallback = nil
+    for _, cont in ipairs(containers) do
+        for _, obj in ipairs(cont:GetChildren()) do
+            if obj:IsA("Tool") then
+                local lower = string.lower(obj.Name)
+                fallback = fallback or obj
+                local good = (#wanted == 0)
+                if not good then
+                    for _, k in ipairs(wanted) do
+                        if string.find(lower, k, 1, true) then
+                            good = true
+                            break
+                        end
+                    end
+                end
+                if good then
+                    if char and obj.Parent ~= char then
+                        pcall(function()
+                            obj.Parent = char
+                        end)
+                    end
+                    return obj
+                end
+            end
+        end
+    end
+
+    if fallback and char and fallback.Parent ~= char then
+        pcall(function()
+            fallback.Parent = char
+        end)
+    end
+    return fallback
+end
+
+local function activateTool(tool)
+    local t = tool or equipAnyTool()
+    if not t then
+        return false
+    end
+    local ok = pcall(function()
+        t:Activate()
+    end)
+    return ok
+end
+
+local function pressSkillKeys()
+    if not hasVIM or not VirtualInputManager then
+        return false
+    end
+    local keys = {
+        Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V, Enum.KeyCode.F,
+    }
+    for _, key in ipairs(keys) do
+        pcall(function()
+            VirtualInputManager:SendKeyEvent(true, key, false, game)
+            VirtualInputManager:SendKeyEvent(false, key, false, game)
+        end)
+    end
+    return true
+end
+
+local function getPromptText(prompt)
+    local text = string.lower(prompt.Name or "")
+    text = text .. " " .. string.lower(tostring(prompt.ObjectText))
+    text = text .. " " .. string.lower(tostring(prompt.ActionText))
+    if prompt.Parent then
+        text = text .. " " .. string.lower(prompt.Parent.Name)
+    end
+    return text
+end
+
+local function tryPrompt(prompt)
     if not prompt or not prompt:IsA("ProximityPrompt") then
         return false
     end
-    local part = findBasePart(prompt.Parent)
-    if not part then
+    local parentPart = prompt.Parent
+    while parentPart and not parentPart:IsA("BasePart") do
+        parentPart = parentPart.Parent
+    end
+    if not parentPart then
         return false
     end
-    if distanceTo(part.Position) > (prompt.MaxActivationDistance + 8) then
+    if distanceToPos(parentPart.Position) > (prompt.MaxActivationDistance + 7) then
         return false
     end
     local ok = pcall(function()
@@ -630,24 +815,18 @@ local function activatePrompt(prompt)
     return ok
 end
 
-local function promptMatches(prompt, keywords)
-    local text = string.lower(prompt.Name)
-    text = text .. " " .. string.lower(tostring(prompt.ObjectText))
-    text = text .. " " .. string.lower(tostring(prompt.ActionText))
-    if prompt.Parent then
-        text = text .. " " .. string.lower(prompt.Parent.Name)
-    end
-    return containsAny(text, keywords)
-end
-
-local function runPromptKeywords(keywords, maxCount)
+local function runPromptByKeywords(keys, maxCount)
     local count = 0
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("ProximityPrompt") and promptMatches(obj, keywords) then
-            if activatePrompt(obj) then
-                count = count + 1
-                if maxCount and count >= maxCount then
-                    break
+    local limit = maxCount or 2
+    for _, prompt in ipairs(State.perception.prompts) do
+        if prompt and prompt.Parent then
+            local pText = getPromptText(prompt)
+            if containsAny(pText, keys) then
+                if tryPrompt(prompt) then
+                    count = count + 1
+                    if count >= limit then
+                        break
+                    end
                 end
             end
         end
@@ -667,15 +846,15 @@ local function touchPart(part)
     return ok
 end
 
-local function collectPartsByKeywords(keywords, maxDistance, maxCount)
+local function collectByKeywords(keys, maxDistance, maxCount)
     local count = 0
+    local distLimit = maxDistance or 35
     local limit = maxCount or 10
-    local distanceLimit = maxDistance or 35
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local lowerName = string.lower(obj.Name)
-            if containsAny(lowerName, keywords) and distanceTo(obj.Position) <= distanceLimit then
-                if touchPart(obj) then
+    for _, part in ipairs(State.perception.loot) do
+        if part and part.Parent then
+            local lower = string.lower(part.Name)
+            if containsAny(lower, keys) and distanceToPos(part.Position) <= distLimit then
+                if touchPart(part) then
                     count = count + 1
                     if count >= limit then
                         break
@@ -687,128 +866,20 @@ local function collectPartsByKeywords(keywords, maxDistance, maxCount)
     return count > 0, count
 end
 
-local function equipAnyTool()
-    local char = getCharacter()
-    if not char then
-        return nil
-    end
-    local equipped = char:FindFirstChildOfClass("Tool")
-    if equipped then
-        return equipped
-    end
-    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-    if not backpack then
-        return nil
-    end
-    local found = backpack:FindFirstChildOfClass("Tool")
-    if found then
-        pcall(function()
-            found.Parent = char
-        end)
-    end
-    return found
-end
-
-local function equipToolByKeywords(keywords)
-    local char = getCharacter()
-    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-    local buckets = {}
-    if char then
-        table.insert(buckets, char)
-    end
-    if backpack then
-        table.insert(buckets, backpack)
-    end
-    for _, bucket in ipairs(buckets) do
-        for _, tool in ipairs(bucket:GetChildren()) do
-            if tool:IsA("Tool") then
-                local lowerName = string.lower(tool.Name)
-                if not keywords or containsAny(lowerName, keywords) then
-                    if char and tool.Parent ~= char then
-                        pcall(function()
-                            tool.Parent = char
-                        end)
-                    end
-                    return tool
-                end
-            end
-        end
-    end
-    return equipAnyTool()
-end
-
-local function activateTool(tool)
-    local t = tool or equipAnyTool()
-    if not t then
+local function runTeleportCycle(useTween)
+    local points = State.config.teleportPoints
+    if #points == 0 then
         return false
     end
-    local ok = pcall(function()
-        t:Activate()
-    end)
-    return ok
-end
-
-local function sendSkillKeys()
-    if not hasVim or not VirtualInputManager then
-        return false
-    end
-    local keys = {
-        Enum.KeyCode.Z,
-        Enum.KeyCode.X,
-        Enum.KeyCode.C,
-        Enum.KeyCode.V,
-        Enum.KeyCode.F,
-    }
-    for _, key in ipairs(keys) do
-        pcall(function()
-            VirtualInputManager:SendKeyEvent(true, key, false, game)
-            VirtualInputManager:SendKeyEvent(false, key, false, game)
-        end)
-    end
-    return true
-end
-
-local function getCategoryEnabledCount(categoryId)
-    local count = 0
-    for _, id in ipairs(State.categoryItems[categoryId]) do
-        if State.toggles[id] then
-            count = count + 1
-        end
-    end
-    return count
-end
-
-local function isEnabledByName(categoryId, phrase)
-    local lowerPhrase = string.lower(phrase)
-    for _, id in ipairs(State.categoryItems[categoryId]) do
-        if State.toggles[id] then
-            local item = State.items[id]
-            if string.find(item.lower, lowerPhrase, 1, true) then
-                return true
-            end
-        end
-    end
-    return false
-end
-
-local function isEnabledAnywhere(phrase)
-    local lowerPhrase = string.lower(phrase)
-    for id, enabled in pairs(State.toggles) do
-        if enabled then
-            local item = State.items[id]
-            if item and string.find(item.lower, lowerPhrase, 1, true) then
-                return true
-            end
-        end
-    end
-    return false
+    State.teleportIndex = (State.teleportIndex % #points) + 1
+    return moveToCFrame(points[State.teleportIndex], useTween)
 end
 
 local function ensureAntiAfk()
-    if State.connections.antiAfk then
+    if State.conns.antiAfk then
         return
     end
-    State.connections.antiAfk = LocalPlayer.Idled:Connect(function()
+    State.conns.antiAfk = LocalPlayer.Idled:Connect(function()
         pcall(function()
             VirtualUser:CaptureController()
             VirtualUser:ClickButton2(Vector2.new())
@@ -817,14 +888,14 @@ local function ensureAntiAfk()
 end
 
 local function ensureInfiniteJump()
-    if State.connections.infJump then
+    if State.conns.infJump then
         return
     end
-    State.connections.infJump = UserInputService.JumpRequest:Connect(function()
+    State.conns.infJump = UserInputService.JumpRequest:Connect(function()
         if not State.running then
             return
         end
-        if isEnabledByName("player_mods", "infinite jump") then
+        if State.flagsInfJump then
             local hum = getHumanoid()
             if hum then
                 hum:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -839,7 +910,7 @@ local function ensureWhiteOverlay(enabled)
             return
         end
         local g = Instance.new("ScreenGui")
-        g.Name = GUI_NAME .. "_White"
+        g.Name = GUI_NAME .. "_WhiteOverlay"
         g.ResetOnSpawn = false
         g.IgnoreGuiInset = true
         g.Parent = PlayerGui
@@ -882,29 +953,43 @@ local function upsertHighlight(key, adornee, color)
             h:Destroy()
         end)
     end
-    local newH = Instance.new("Highlight")
-    newH.Name = "AH_HL"
-    newH.FillColor = color
-    newH.FillTransparency = 0.78
-    newH.OutlineColor = color
-    newH.OutlineTransparency = 0.15
-    newH.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    newH.Adornee = adornee
-    newH:SetAttribute("seen", true)
-    newH.Parent = Workspace
-    State.highlights[key] = newH
+    local nh = Instance.new("Highlight")
+    nh.Name = "AH_ESP"
+    nh.Adornee = adornee
+    nh.FillColor = color
+    nh.OutlineColor = color
+    nh.FillTransparency = 0.78
+    nh.OutlineTransparency = 0.18
+    nh.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    nh:SetAttribute("seen", true)
+    nh.Parent = Workspace
+    State.highlights[key] = nh
 end
 
-local function refreshESP()
-    local showPlayer = isEnabledByName("esp_visual", "player esp")
-    local showEnemy = isEnabledByName("esp_visual", "enemy esp")
-    local showBoss = isEnabledByName("esp_visual", "boss esp")
-    local showChest = isEnabledByName("esp_visual", "chest esp")
-    local showFruit = isEnabledByName("esp_visual", "fruit esp")
-    local showNpc = isEnabledByName("esp_visual", "npc esp")
-    local showIsland = isEnabledByName("esp_visual", "island esp")
+local function categoryPhraseEnabled(categoryId, phrase)
+    local p = string.lower(phrase)
+    for _, id in ipairs(State.categoryItems[categoryId]) do
+        if State.toggles[id] then
+            local item = State.items[id]
+            if item and string.find(item.lower, p, 1, true) then
+                return true
+            end
+        end
+    end
+    return false
+end
 
-    if not (showPlayer or showEnemy or showBoss or showChest or showFruit or showNpc or showIsland) then
+local function refreshESPVisuals()
+    local showPlayer = categoryPhraseEnabled("esp_visual", "player esp")
+    local showEnemy = categoryPhraseEnabled("esp_visual", "enemy esp")
+    local showBoss = categoryPhraseEnabled("esp_visual", "boss esp")
+    local showChest = categoryPhraseEnabled("esp_visual", "chest esp")
+    local showFruit = categoryPhraseEnabled("esp_visual", "fruit esp")
+    local showNpc = categoryPhraseEnabled("esp_visual", "npc esp")
+    local showIsland = categoryPhraseEnabled("esp_visual", "island esp")
+    local showAny = showPlayer or showEnemy or showBoss or showChest or showFruit or showNpc or showIsland
+
+    if not showAny then
         clearHighlights()
         return false
     end
@@ -923,35 +1008,56 @@ local function refreshESP()
         end
     end
 
-    local objectBudget = 0
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if objectBudget > 120 then
-            break
+    local budget = 0
+    if showEnemy or showBoss then
+        for _, model in ipairs(State.perception.enemies) do
+            if budget > 120 then
+                break
+            end
+            local lower = string.lower(model.Name)
+            if showBoss and containsAny(lower, BOSS_KEYS) then
+                upsertHighlight("B:" .. tostring(model), model, Color3.fromRGB(255, 109, 109))
+                budget = budget + 1
+            elseif showEnemy and not containsAny(lower, BOSS_KEYS) then
+                upsertHighlight("E:" .. tostring(model), model, Color3.fromRGB(255, 205, 90))
+                budget = budget + 1
+            end
         end
-        if obj:IsA("Model") then
-            local lower = string.lower(obj.Name)
-            if showBoss and isEnemyModel(obj) and isBossName(lower) then
-                upsertHighlight("B:" .. tostring(obj), obj, Color3.fromRGB(255, 111, 111))
-                objectBudget = objectBudget + 1
-            elseif showEnemy and isEnemyModel(obj) then
-                upsertHighlight("E:" .. tostring(obj), obj, Color3.fromRGB(255, 205, 90))
-                objectBudget = objectBudget + 1
-            elseif showNpc and containsAny(lower, { "npc", "quest", "dealer", "trainer", "teacher" }) then
-                upsertHighlight("N:" .. tostring(obj), obj, Color3.fromRGB(149, 239, 167))
-                objectBudget = objectBudget + 1
+    end
+
+    if showChest or showFruit then
+        for _, part in ipairs(State.perception.loot) do
+            if budget > 200 then
+                break
             end
-        elseif obj:IsA("BasePart") then
-            local lower = string.lower(obj.Name)
+            local lower = string.lower(part.Name)
             if showChest and containsAny(lower, { "chest", "treasure" }) then
-                upsertHighlight("C:" .. tostring(obj), obj, Color3.fromRGB(255, 228, 122))
-                objectBudget = objectBudget + 1
+                upsertHighlight("C:" .. tostring(part), part, Color3.fromRGB(255, 225, 120))
+                budget = budget + 1
             elseif showFruit and containsAny(lower, { "fruit", "blox" }) then
-                upsertHighlight("F:" .. tostring(obj), obj, Color3.fromRGB(219, 141, 255))
-                objectBudget = objectBudget + 1
-            elseif showIsland and containsAny(lower, IslandKeywords) then
-                upsertHighlight("I:" .. tostring(obj), obj, Color3.fromRGB(122, 226, 255))
-                objectBudget = objectBudget + 1
+                upsertHighlight("F:" .. tostring(part), part, Color3.fromRGB(218, 132, 255))
+                budget = budget + 1
             end
+        end
+    end
+
+    if showNpc then
+        for _, npc in ipairs(State.perception.npcs) do
+            if budget > 260 then
+                break
+            end
+            upsertHighlight("N:" .. tostring(npc), npc, Color3.fromRGB(153, 239, 171))
+            budget = budget + 1
+        end
+    end
+
+    if showIsland then
+        for _, island in ipairs(State.perception.islands) do
+            if budget > 300 then
+                break
+            end
+            upsertHighlight("I:" .. tostring(island), island, Color3.fromRGB(122, 226, 255))
+            budget = budget + 1
         end
     end
 
@@ -1006,7 +1112,7 @@ local function sendWebhookBatch()
         username = "AutoHub Organized",
         embeds = {
             {
-                title = "Automation Feed",
+                title = "Event Feed",
                 description = "Player: " .. LocalPlayer.Name,
                 color = 4169983,
                 fields = fields,
@@ -1021,21 +1127,25 @@ local function sendWebhookBatch()
 end
 
 local function encodeConfig()
-    local out = {
+    local data = {
         toggles = State.toggles,
         config = {
             selectedCategory = State.config.selectedCategory,
             searchText = State.config.searchText,
             webhookUrl = State.config.webhookUrl,
+            mobKeyword = State.config.mobKeyword,
+            bossKeyword = State.config.bossKeyword,
+            fruitKeyword = State.config.fruitKeyword,
             autosaveSeconds = State.config.autosaveSeconds,
+            threatDistance = State.config.threatDistance,
             teleportPoints = {},
         },
     }
     for _, cf in ipairs(State.config.teleportPoints) do
         local p = cf.Position
-        table.insert(out.config.teleportPoints, { p.X, p.Y, p.Z })
+        table.insert(data.config.teleportPoints, { p.X, p.Y, p.Z })
     end
-    return out
+    return data
 end
 
 local function saveConfig()
@@ -1064,7 +1174,6 @@ local function loadConfig()
     if not ok or type(decoded) ~= "table" then
         return false
     end
-
     if type(decoded.toggles) == "table" then
         for id, value in pairs(decoded.toggles) do
             if State.toggles[id] ~= nil then
@@ -1073,15 +1182,20 @@ local function loadConfig()
         end
     end
     if type(decoded.config) == "table" then
-        if type(decoded.config.selectedCategory) == "string" and State.categoryLookup[decoded.config.selectedCategory] then
-            State.config.selectedCategory = decoded.config.selectedCategory
+        local c = decoded.config
+        if type(c.selectedCategory) == "string" and State.categoryLookup[c.selectedCategory] then
+            State.config.selectedCategory = c.selectedCategory
         end
-        State.config.searchText = tostring(decoded.config.searchText or "")
-        State.config.webhookUrl = tostring(decoded.config.webhookUrl or "")
-        State.config.autosaveSeconds = tonumber(decoded.config.autosaveSeconds) or State.config.autosaveSeconds
-        if type(decoded.config.teleportPoints) == "table" and #decoded.config.teleportPoints > 0 then
+        State.config.searchText = tostring(c.searchText or State.config.searchText)
+        State.config.webhookUrl = tostring(c.webhookUrl or State.config.webhookUrl)
+        State.config.mobKeyword = tostring(c.mobKeyword or State.config.mobKeyword)
+        State.config.bossKeyword = tostring(c.bossKeyword or State.config.bossKeyword)
+        State.config.fruitKeyword = tostring(c.fruitKeyword or State.config.fruitKeyword)
+        State.config.autosaveSeconds = tonumber(c.autosaveSeconds) or State.config.autosaveSeconds
+        State.config.threatDistance = tonumber(c.threatDistance) or State.config.threatDistance
+        if type(c.teleportPoints) == "table" and #c.teleportPoints > 0 then
             State.config.teleportPoints = {}
-            for _, row in ipairs(decoded.config.teleportPoints) do
+            for _, row in ipairs(c.teleportPoints) do
                 if type(row) == "table" and #row >= 3 then
                     table.insert(
                         State.config.teleportPoints,
@@ -1094,75 +1208,110 @@ local function loadConfig()
     return true
 end
 
-local function findNearestPlayerCharacter(maxDistance)
-    local root = getRoot()
-    if not root then
-        return nil
-    end
-    local best = maxDistance or 500
-    local target = nil
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (root.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-            if dist < best then
-                best = dist
-                target = plr.Character
-            end
-        end
-    end
-    return target
-end
+local function refreshPerception()
+    local p = State.perception
+    p.enemies = {}
+    p.bosses = {}
+    p.prompts = {}
+    p.loot = {}
+    p.fruits = {}
+    p.islands = {}
+    p.players = {}
+    p.npcs = {}
 
-local function findNearestKeywordObject(keywords, maxDistance)
-    local root = getRoot()
-    if not root then
-        return nil
-    end
-    local best = maxDistance or 600
-    local found = nil
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") then
+    local desc = Workspace:GetDescendants()
+    local budget = 0
+    for _, obj in ipairs(desc) do
+        budget = budget + 1
+        if budget > 18000 then
+            break
+        end
+
+        if obj:IsA("Model") then
             local lower = string.lower(obj.Name)
-            if containsAny(lower, keywords) then
-                local dist = (root.Position - obj.HumanoidRootPart.Position).Magnitude
-                if dist < best then
-                    best = dist
-                    found = obj
+            if isEnemyModel(obj) then
+                table.insert(p.enemies, obj)
+                if containsAny(lower, BOSS_KEYS) then
+                    table.insert(p.bosses, obj)
                 end
+            elseif containsAny(lower, NPC_KEYS) then
+                table.insert(p.npcs, obj)
+            elseif containsAny(lower, ISLAND_KEYS) then
+                table.insert(p.islands, obj)
             end
+        elseif obj:IsA("ProximityPrompt") then
+            table.insert(p.prompts, obj)
         elseif obj:IsA("BasePart") then
             local lower = string.lower(obj.Name)
-            if containsAny(lower, keywords) then
-                local dist = (root.Position - obj.Position).Magnitude
-                if dist < best then
-                    best = dist
-                    found = obj
-                end
+            if containsAny(lower, LOOT_KEYS) then
+                table.insert(p.loot, obj)
+            end
+            if containsAny(lower, { "fruit", "blox" }) then
+                table.insert(p.fruits, obj)
+            end
+            if containsAny(lower, ISLAND_KEYS) then
+                table.insert(p.islands, obj)
             end
         end
     end
-    return found
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(p.players, plr.Character)
+        end
+    end
+    p.lastScan = now()
 end
 
-local function bringEnemies(radius, bringAll)
+local function nearestEnemy(maxDist, bossOnly, pattern)
+    local list = bossOnly and State.perception.bosses or State.perception.enemies
+    local needle = pattern and string.lower(pattern) or nil
+    return getNearest(list, maxDist or 150, function(model)
+        if not model or not model.Parent then
+            return false
+        end
+        if needle and needle ~= "" then
+            return string.find(string.lower(model.Name), needle, 1, true) ~= nil
+        end
+        return true
+    end)
+end
+
+local function nearestPlayer(maxDist)
+    return getNearest(State.perception.players, maxDist or 1500, nil)
+end
+
+local function nearestNpcByKeywords(keys, maxDist)
+    local lowerKeys = normalizeKeywordList(keys)
+    return getNearest(State.perception.npcs, maxDist or 1200, function(model)
+        local lower = string.lower(model.Name)
+        return containsAny(lower, lowerKeys)
+    end)
+end
+
+local function nearestIsland(maxDist)
+    return getNearest(State.perception.islands, maxDist or 3000, nil)
+end
+
+local function bringEnemies(all)
     local root = getRoot()
     if not root then
         return false
     end
     local count = 0
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if isEnemyModel(obj) then
-            local d = (root.Position - obj.HumanoidRootPart.Position).Magnitude
-            if d <= 250 then
+    for _, enemy in ipairs(State.perception.enemies) do
+        if enemy and enemy.Parent and enemy:FindFirstChild("HumanoidRootPart") then
+            local dist = (root.Position - enemy.HumanoidRootPart.Position).Magnitude
+            if dist <= 260 then
                 pcall(function()
                     local offset = Vector3.new((count % 6) * 2, 0, math.floor(count / 6) * 2)
-                    obj.HumanoidRootPart.CFrame = root.CFrame * CFrame.new(offset)
+                    enemy.HumanoidRootPart.CFrame = root.CFrame * CFrame.new(offset)
                 end)
                 count = count + 1
-                if not bringAll and count >= 1 then
+                if not all and count >= 1 then
                     break
                 end
-                if count >= (radius or 18) then
+                if count >= 24 then
                     break
                 end
             end
@@ -1171,7 +1320,19 @@ local function bringEnemies(radius, bringAll)
     return count > 0
 end
 
-local function setHumanoidProps()
+local function detectPossibleAdmin()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local lower = string.lower(plr.Name .. " " .. plr.DisplayName)
+            if containsAny(lower, { "admin", "mod", "staff", "owner", "developer" }) then
+                return plr
+            end
+        end
+    end
+    return nil
+end
+
+local function applyHumanoidMods()
     local hum = getHumanoid()
     local root = getRoot()
     if not hum then
@@ -1179,29 +1340,26 @@ local function setHumanoidProps()
     end
     local changed = false
 
-    if isEnabledByName("player_mods", "walk speed") then
+    if categoryPhraseEnabled("player_mods", "walk speed") then
         if hum.WalkSpeed < 32 then
             hum.WalkSpeed = 32
             changed = true
         end
     end
-
-    if isEnabledByName("player_mods", "dash boost") then
+    if categoryPhraseEnabled("player_mods", "dash boost") then
         if hum.WalkSpeed < 44 then
             hum.WalkSpeed = 44
             changed = true
         end
     end
-
-    if isEnabledByName("player_mods", "jump power") then
+    if categoryPhraseEnabled("player_mods", "jump power") then
         hum.UseJumpPower = true
         if hum.JumpPower < 85 then
             hum.JumpPower = 85
             changed = true
         end
     end
-
-    if isEnabledByName("player_mods", "noclip") then
+    if categoryPhraseEnabled("player_mods", "noclip") then
         local char = getCharacter()
         if char then
             for _, obj in ipairs(char:GetDescendants()) do
@@ -1212,37 +1370,28 @@ local function setHumanoidProps()
             end
         end
     end
-
-    if isEnabledByName("player_mods", "anti stun") then
+    if categoryPhraseEnabled("player_mods", "anti stun") then
         hum.PlatformStand = false
         hum.Sit = false
         changed = true
     end
-
-    if isEnabledByName("player_mods", "no knockback") and root then
+    if categoryPhraseEnabled("player_mods", "no knockback") and root then
         root.AssemblyLinearVelocity = Vector3.new(0, root.AssemblyLinearVelocity.Y, 0)
         changed = true
     end
-
-    if isEnabledByName("player_mods", "infinite jump") then
-        ensureInfiniteJump()
-    end
-
-    if isEnabledByName("player_mods", "fly") and root then
-        pcall(function()
-            root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, 22, root.AssemblyLinearVelocity.Z)
-        end)
+    if categoryPhraseEnabled("player_mods", "fly") and root then
+        root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, 24, root.AssemblyLinearVelocity.Z)
         changed = true
     end
-
+    State.flagsInfJump = categoryPhraseEnabled("player_mods", "infinite jump")
     return changed
 end
 
 local function applyLowGraphics()
     pcall(function()
         Lighting.GlobalShadows = false
-        Lighting.FogEnd = 9e9
         Lighting.Brightness = 1
+        Lighting.FogEnd = 9e9
     end)
     pcall(function()
         for _, obj in ipairs(Workspace:GetDescendants()) do
@@ -1255,23 +1404,11 @@ local function applyLowGraphics()
     end)
 end
 
-local function detectPossibleAdmin()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            local lower = string.lower(plr.Name .. " " .. plr.DisplayName)
-            if containsAny(lower, { "admin", "mod", "owner", "developer", "staff" }) then
-                return plr
-            end
-        end
-    end
-    return nil
-end
-
-local function tryFireStatsRemote(statName)
+local function tryStatsRemote(statName)
     for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
         if obj:IsA("RemoteEvent") then
             local lower = string.lower(obj.Name)
-            if containsAny(lower, { "addpoint", "addstat", "upstat", "stats", "add point" }) then
+            if containsAny(lower, { "addpoint", "addstat", "upstat", "stats", "point" }) then
                 local ok = pcall(function()
                     obj:FireServer(statName, 1)
                 end)
@@ -1286,92 +1423,114 @@ end
 
 local function runAutoFarm(item)
     local acted = false
-    if string.find(item.lower, "quest", 1, true) then
-        local ok, c = runPromptKeywords({ "quest", "mission", "giver", "npc" }, 2)
-        acted = ok or acted
-        if c and c > 0 then
-            addAction("quest x" .. tostring(c), c)
-        end
-    end
-    if string.find(item.lower, "skills", 1, true) then
-        acted = sendSkillKeys() or acted
-    end
-    if string.find(item.lower, "afk", 1, true) then
+
+    if hasWord(item, "afk") then
         ensureAntiAfk()
         acted = true
     end
+    if hasWord(item, "quest") then
+        local ok, c = runPromptByKeywords(QUEST_KEYS, 2)
+        acted = ok or acted
+        if c > 0 then
+            addAction("quest x" .. tostring(c), c)
+        end
+    end
 
-    local target = findNearestEnemy(140, false, nil)
+    local pattern = nil
+    if hasWord(item, "selecao de mob") then
+        pattern = trim(State.config.mobKeyword)
+    end
+    local target = nearestEnemy(190, false, pattern)
+
     if target then
         local hum = target:FindFirstChildOfClass("Humanoid")
-        if isEnabledByName("auto_farm", "deteccao de hp") and hum and hum.Health <= 5 then
+        if hasWord(item, "deteccao de hp") and hum and hum.Health <= 5 then
             return acted
         end
-        local useTween = string.find(item.lower, "pathfinding", 1, true) ~= nil
-        local backDistance = isEnabledByName("auto_farm", "distancia segura") and 10 or 6
-        if isEnabledByName("auto_farm", "posicionamento atras") then
-            backDistance = 8
-        end
-        acted = teleportNearModel(target, backDistance, useTween) or acted
-        if string.find(item.lower, "ataque", 1, true) or isEnabledByName("auto_farm", "ataque automatico") then
+
+        local safeDist = categoryPhraseEnabled("auto_farm", "distancia segura") and 10 or 6
+        local behind = hasWord(item, "posicionamento atras")
+        local useTween = hasWord(item, "pathfinding")
+
+        acted = moveNearModel(target, safeDist, useTween, behind) or acted
+
+        if hasWord(item, "fruta especifica") then
+            acted = activateTool(equipToolByKeywords({ State.config.fruitKeyword, "fruit", "blox" })) or acted
+        elseif hasWord(item, "arma especifica") then
+            acted = activateTool(equipToolByKeywords({ State.config.mobKeyword, "sword", "gun" })) or acted
+        elseif hasWord(item, "fighting style") then
             acted = activateTool(equipAnyTool()) or acted
         end
+
+        if hasWord(item, "ataque automatico") or hasWord(item, "inimigo") or hasWord(item, "farm level") then
+            acted = activateTool(equipAnyTool()) or acted
+        end
+        if hasWord(item, "skills automaticas") then
+            acted = pressSkillKeys() or acted
+        end
     else
-        if string.find(item.lower, "inteligente", 1, true) then
+        if hasWord(item, "inteligente") then
             acted = runTeleportCycle(true) or acted
         end
     end
+
     return acted
 end
 
 local function runBoss(item)
-    local wanted = nil
-    if string.find(item.lower, "saber", 1, true) then
-        wanted = "saber"
-    elseif string.find(item.lower, "don swan", 1, true) then
-        wanted = "don swan"
-    elseif string.find(item.lower, "cake prince", 1, true) then
-        wanted = "cake prince"
-    elseif string.find(item.lower, "rip indra", 1, true) then
-        wanted = "rip indra"
-    elseif string.find(item.lower, "dough king", 1, true) then
-        wanted = "dough king"
-    elseif string.find(item.lower, "tushita", 1, true) then
-        wanted = "tushita"
+    local pattern = trim(State.config.bossKeyword)
+    if hasWord(item, "saber") then
+        pattern = "saber"
+    elseif hasWord(item, "don swan") then
+        pattern = "don swan"
+    elseif hasWord(item, "cake prince") then
+        pattern = "cake prince"
+    elseif hasWord(item, "rip indra") then
+        pattern = "rip indra"
+    elseif hasWord(item, "dough king") then
+        pattern = "dough king"
+    elseif hasWord(item, "tushita") then
+        pattern = "tushita"
+    elseif hasWord(item, "elite") then
+        pattern = "elite"
     end
 
-    local target = findNearestEnemy(520, true, wanted)
-    if string.find(item.lower, "spawn detector", 1, true) then
-        if target and State.cache.lastBossNotice ~= target.Name then
-            State.cache.lastBossNotice = target.Name
-            pushEvent("boss spawn: " .. target.Name)
-            safeNotify("AutoHub", "Boss detectado: " .. target.Name)
+    local boss = nearestEnemy(900, true, pattern)
+    if hasWord(item, "spawn detector") then
+        if boss and State.cache.lastBossSeen ~= boss.Name then
+            State.cache.lastBossSeen = boss.Name
+            pushEvent("boss spawn: " .. boss.Name)
+            safeNotify("AutoHub", "Boss detectado: " .. boss.Name)
             return true
         end
         return false
     end
 
-    if target then
-        local moved = teleportNearModel(target, 11, false)
-        local attacked = activateTool(equipAnyTool())
-        return moved or attacked
+    if boss then
+        local moved = moveNearModel(boss, 12, false, false)
+        local atk = activateTool(equipAnyTool())
+        return moved or atk
     end
 
-    if string.find(item.lower, "server hop", 1, true) then
-        pushEvent("sem boss local, server hop sugerido")
+    if hasWord(item, "server hop") and cooldownReady("boss_hop", 120) then
+        pcall(function()
+            TeleportService:Teleport(game.PlaceId, LocalPlayer)
+        end)
+        pushEvent("boss hop called")
+        return true
     end
     return false
 end
 
 local function runFrutas(item)
-    if string.find(item.lower, "buy", 1, true) then
-        local ok = runPromptKeywords({ "dealer", "fruit", "shop", "buy" }, 1)
+    if hasWord(item, "buy") then
+        local ok = runPromptByKeywords({ "dealer", "fruit", "buy", "shop" }, 1)
         return ok
-    elseif string.find(item.lower, "store", 1, true) then
-        local ok = runPromptKeywords({ "store", "inventory", "fruit" }, 1)
+    elseif hasWord(item, "store") then
+        local ok = runPromptByKeywords({ "store", "inventory", "fruit" }, 1)
         return ok
-    elseif string.find(item.lower, "drop", 1, true) then
-        local tool = equipToolByKeywords({ "fruit" })
+    elseif hasWord(item, "drop") then
+        local tool = equipToolByKeywords({ State.config.fruitKeyword, "fruit" })
         if tool then
             pcall(function()
                 tool.Parent = Workspace
@@ -1379,94 +1538,159 @@ local function runFrutas(item)
             return true
         end
         return false
-    elseif string.find(item.lower, "eat", 1, true) then
-        return activateTool(equipToolByKeywords({ "fruit" }))
-    elseif string.find(item.lower, "gacha", 1, true) or string.find(item.lower, "random", 1, true) then
-        local ok = runPromptKeywords({ "cousin", "random", "fruit" }, 1)
+    elseif hasWord(item, "eat") then
+        return activateTool(equipToolByKeywords({ State.config.fruitKeyword, "fruit" }))
+    elseif hasWord(item, "random") or hasWord(item, "gacha") then
+        local ok = runPromptByKeywords({ "cousin", "random", "fruit", "gacha" }, 1)
         return ok
-    elseif string.find(item.lower, "sniper", 1, true) then
-        local ok = runPromptKeywords({ "stock", "dealer", "fruit" }, 1)
+    elseif hasWord(item, "sniper") then
+        local wanted = trim(State.config.fruitKeyword)
+        if wanted ~= "" then
+            for _, f in ipairs(State.perception.fruits) do
+                if string.find(string.lower(f.Name), string.lower(wanted), 1, true) then
+                    pushEvent("desired fruit found: " .. f.Name)
+                    safeNotify("AutoHub", "Fruta detectada: " .. f.Name)
+                    return true
+                end
+            end
+        end
+        local ok = runPromptByKeywords({ "stock", "dealer", "fruit" }, 1)
         return ok
-    elseif string.find(item.lower, "mastery", 1, true) then
-        return activateTool(equipToolByKeywords({ "fruit" }))
-    elseif string.find(item.lower, "awakening", 1, true) or string.find(item.lower, "raid", 1, true) then
-        local ok = runPromptKeywords({ "raid", "awak", "awaken", "chip" }, 2)
-        return ok
+    elseif hasWord(item, "mastery") then
+        local target = nearestEnemy(140, false, nil)
+        if target then
+            moveNearModel(target, 8, false, false)
+        end
+        return activateTool(equipToolByKeywords({ State.config.fruitKeyword, "fruit", "blox" }))
+    elseif hasWord(item, "awakening") or hasWord(item, "raid") then
+        local ok = runPromptByKeywords({ "raid", "awak", "awaken", "chip" }, 2)
+        local toolOk = false
+        if hasWord(item, "fruta especifica") then
+            toolOk = activateTool(equipToolByKeywords({ State.config.fruitKeyword, "fruit", "blox" }))
+        end
+        return ok or toolOk
     end
     return false
 end
 
 local function runCombate(item)
     local acted = false
-    if string.find(item.lower, "hitbox", 1, true) then
-        local target = findNearestEnemy(85, false, nil)
-        if target and target:FindFirstChild("HumanoidRootPart") then
+    local target = nearestEnemy(170, false, nil)
+
+    if target then
+        if hasWord(item, "auto aim") then
+            local root = getRoot()
+            if root and target:FindFirstChild("HumanoidRootPart") then
+                root.CFrame = CFrame.lookAt(root.Position, target.HumanoidRootPart.Position)
+                acted = true
+            end
+        end
+        if hasWord(item, "hitbox") and target:FindFirstChild("HumanoidRootPart") then
             pcall(function()
                 target.HumanoidRootPart.Size = Vector3.new(8, 8, 8)
-                target.HumanoidRootPart.Transparency = 0.4
+                target.HumanoidRootPart.Transparency = 0.5
                 target.HumanoidRootPart.CanCollide = false
             end)
             acted = true
         end
-    end
-    if string.find(item.lower, "skill", 1, true) or string.find(item.lower, "combo", 1, true) or string.find(item.lower, "aim", 1, true) then
-        acted = sendSkillKeys() or acted
+
+        if hasWord(item, "kill aura") or hasWord(item, "fast attack") or hasWord(item, "no attack delay") or hasWord(item, "auto click") then
+            acted = moveNearModel(target, 6, false, false) or acted
+            acted = activateTool(equipAnyTool()) or acted
+        end
+        if hasWord(item, "auto skill") or hasWord(item, "auto combo") then
+            acted = pressSkillKeys() or acted
+        end
+        if hasWord(item, "damage amplifier") then
+            acted = true
+        end
+    else
+        if hasWord(item, "auto click") or hasWord(item, "fast attack") then
+            acted = activateTool(equipAnyTool()) or acted
+        end
     end
 
-    local target = findNearestEnemy(120, false, nil)
-    if target then
-        acted = teleportNearModel(target, 6, false) or acted
-    end
-    acted = activateTool(equipAnyTool()) or acted
     return acted
 end
 
 local function runFightingStyle(item)
-    local acted = false
-    local promptOk = runPromptKeywords({
-        "style", "teacher", "trainer", "karate", "claw", "step", "godhuman", "kung", "breath",
-    }, 1)
-    acted = promptOk or acted
-    acted = activateTool(equipAnyTool()) or acted
-    return acted
+    local promptOk = runPromptByKeywords({ "style", "trainer", "teacher", "karate", "claw", "step", "godhuman", "breath" }, 1)
+    local atkOk = activateTool(equipAnyTool())
+    return promptOk or atkOk
 end
 
 local function runEspadas(item)
-    local tool = equipToolByKeywords({ "sword", "katana", "blade", "sabre", "scythe", "trident" })
-    return activateTool(tool)
+    local acted = false
+    if hasWord(item, "upgrade") then
+        acted = runPromptByKeywords({ "blacksmith", "upgrade", "enhance", "sword" }, 1) or acted
+    end
+    if hasWord(item, "switch") then
+        acted = activateTool(equipToolByKeywords({ "sword", "katana", "blade", "sabre", "trident", "scythe" })) or acted
+    else
+        acted = activateTool(equipToolByKeywords({ "sword", "katana", "blade", "sabre", "trident", "scythe" })) or acted
+    end
+    return acted
 end
 
 local function runArmas(item)
+    local acted = false
     local tool = equipToolByKeywords({ "gun", "rifle", "bow", "musket", "kabucha", "flintlock", "acidum" })
-    return activateTool(tool)
+    if hasWord(item, "aimbot") then
+        local target = nearestEnemy(230, false, nil)
+        local root = getRoot()
+        if root and target and target:FindFirstChild("HumanoidRootPart") then
+            root.CFrame = CFrame.lookAt(root.Position, target.HumanoidRootPart.Position)
+            acted = true
+        end
+    end
+    if hasWord(item, "reload") and hasVIM and VirtualInputManager then
+        pcall(function()
+            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+        end)
+        acted = true
+    end
+    if hasWord(item, "no spread") and tool then
+        for _, d in ipairs(tool:GetDescendants()) do
+            if d:IsA("NumberValue") and string.find(string.lower(d.Name), "spread", 1, true) then
+                d.Value = 0
+                acted = true
+            end
+        end
+    end
+    acted = activateTool(tool) or acted
+    return acted
 end
 
 local function runRaca(item)
     local acted = false
-    if containsAny(item.lower, { "mirage", "trial", "gear" }) then
-        local obj = findNearestKeywordObject({ "mirage", "trial", "gear", "temple" }, 900)
-        if obj then
-            pushEvent("race target: " .. obj.Name)
-            acted = true
+    if hasWord(item, "mirage") then
+        local island = nearestIsland(2000)
+        if island and string.find(string.lower(island.Name), "mirage", 1, true) then
+            local part = island:IsA("BasePart") and island or island:FindFirstChild("HumanoidRootPart")
+            if part then
+                acted = moveToCFrame(part.CFrame + Vector3.new(0, 10, 0), true) or acted
+            end
         end
     end
-    local promptOk = runPromptKeywords({ "race", "trial", "gear", "awakening", "v2", "v3", "v4" }, 2)
-    return acted or promptOk
+    if hasWord(item, "trial") or hasWord(item, "gear") or hasWord(item, "v2") or hasWord(item, "v3") or hasWord(item, "v4") then
+        acted = runPromptByKeywords({ "trial", "gear", "race", "awakening", "v2", "v3", "v4", "temple" }, 2) or acted
+    end
+    return acted
 end
 
 local function runHaki(item)
     local acted = false
-    local promptOk = runPromptKeywords({ "haki", "aura", "buso", "ken", "instinct", "observation" }, 1)
-    acted = promptOk or acted
+    acted = runPromptByKeywords({ "haki", "aura", "instinct", "ken", "buso", "enhancement" }, 1) or acted
     for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
         if obj:IsA("RemoteEvent") then
             local lower = string.lower(obj.Name)
-            if containsAny(lower, { "haki", "aura", "instinct", "buso", "ken" }) then
+            if containsAny(lower, { "haki", "aura", "instinct", "ken", "buso" }) then
                 local ok = pcall(function()
                     obj:FireServer()
                 end)
-                acted = ok or acted
                 if ok then
+                    acted = true
                     break
                 end
             end
@@ -1477,146 +1701,100 @@ local function runHaki(item)
 end
 
 local function runTeleport(item)
-    if string.find(item.lower, "player", 1, true) then
-        local char = findNearestPlayerCharacter(1200)
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local root = getRoot()
-            if root then
-                root.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 0, 7)
-                return true
-            end
+    if hasWord(item, "bring all mobs") then
+        return bringEnemies(true)
+    end
+    if hasWord(item, "bring mob") or hasWord(item, "magnet") then
+        return bringEnemies(false)
+    end
+    if hasWord(item, "teleport player") then
+        local target = nearestPlayer(2200)
+        if target and target:FindFirstChild("HumanoidRootPart") then
+            return moveToCFrame(target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 8), false)
         end
         return false
     end
-    if string.find(item.lower, "boss", 1, true) then
-        local boss = findNearestEnemy(1400, true, nil)
+    if hasWord(item, "teleport boss") then
+        local boss = nearestEnemy(2000, true, trim(State.config.bossKeyword))
         if boss then
-            return teleportNearModel(boss, 12, false)
+            return moveNearModel(boss, 12, false, false)
         end
         return false
     end
-    if string.find(item.lower, "npc", 1, true) then
-        local npc = findNearestKeywordObject({ "npc", "quest", "dealer", "teacher", "trainer" }, 1600)
+    if hasWord(item, "teleport npc") then
+        local npc = nearestNpcByKeywords(NPC_KEYS, 2000)
         if npc then
-            local root = getRoot()
-            if root then
-                local part = npc:IsA("BasePart") and npc or npc:FindFirstChild("HumanoidRootPart")
-                if part then
-                    root.CFrame = part.CFrame * CFrame.new(0, 0, 6)
-                    return true
-                end
+            if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") then
+                return moveToCFrame(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 8), false)
             end
         end
         return false
     end
-    if string.find(item.lower, "island", 1, true) then
-        local island = findNearestKeywordObject(IslandKeywords, 3000)
+    if hasWord(item, "teleport island") then
+        local island = nearestIsland(4000)
         if island then
-            local root = getRoot()
-            if root then
-                local part = island:IsA("BasePart") and island or island:FindFirstChild("HumanoidRootPart")
-                if part then
-                    root.CFrame = part.CFrame * CFrame.new(0, 12, 0)
-                    return true
-                end
+            local part = island:IsA("BasePart") and island or island:FindFirstChild("HumanoidRootPart")
+            if part then
+                return moveToCFrame(part.CFrame + Vector3.new(0, 12, 0), false)
             end
         end
         return runTeleportCycle(false)
     end
-    if string.find(item.lower, "bring all mobs", 1, true) then
-        return bringEnemies(30, true)
-    end
-    if string.find(item.lower, "bring mob", 1, true) or string.find(item.lower, "magnet", 1, true) then
-        return bringEnemies(12, false)
-    end
-    if string.find(item.lower, "tween teleport", 1, true) then
+    if hasWord(item, "tween teleport") then
         return runTeleportCycle(true)
     end
-    if string.find(item.lower, "instant teleport", 1, true) then
+    if hasWord(item, "instant teleport") then
         return runTeleportCycle(false)
     end
     return runTeleportCycle(false)
 end
 
 local function runPlayerMods(item)
-    return setHumanoidProps()
+    return applyHumanoidMods()
 end
 
-local function runESP(item)
-    return refreshESP()
+local function runEspVisual(item)
+    return refreshESPVisuals()
 end
 
 local function runRecursos(item)
-    local acted = false
-    local keywords = { "drop", "loot", "coin", "chest", "material", "fragment" }
-    if string.find(item.lower, "chest", 1, true) then
-        keywords = { "chest", "treasure" }
-    elseif string.find(item.lower, "fragments", 1, true) then
-        keywords = { "fragment", "frag" }
-    elseif string.find(item.lower, "materials", 1, true) then
-        keywords = { "material", "ore", "scale", "scrap" }
-    elseif string.find(item.lower, "money", 1, true) then
-        keywords = { "coin", "money", "cash", "reward" }
-    elseif string.find(item.lower, "drops", 1, true) then
-        keywords = { "drop", "loot", "reward" }
+    local keys = LOOT_KEYS
+    if hasWord(item, "chest") then
+        keys = { "chest", "treasure" }
+    elseif hasWord(item, "fragments") then
+        keys = { "fragment", "frag" }
+    elseif hasWord(item, "materials") then
+        keys = { "material", "ore", "scale", "scrap" }
+    elseif hasWord(item, "money") then
+        keys = { "money", "coin", "cash", "reward" }
+    elseif hasWord(item, "drops") then
+        keys = { "drop", "loot", "reward" }
     end
-    local collectOk, c = collectPartsByKeywords(keywords, 40, 8)
-    acted = collectOk or acted
-    if c and c > 0 then
+    local collectOk, c = collectByKeywords(keys, 42, 8)
+    local promptOk = runPromptByKeywords({ "collect", "claim", "reward", "loot", "fragment" }, 2)
+    if c > 0 then
         addAction("collect x" .. tostring(c), c)
     end
-    local promptOk = runPromptKeywords({ "collect", "claim", "reward", "loot", "fragment" }, 2)
-    acted = promptOk or acted
-    return acted
+    return collectOk or promptOk
 end
 
 local function runServerRuntime(item)
-    if string.find(item.lower, "anti afk", 1, true) then
+    if hasWord(item, "anti afk") then
         ensureAntiAfk()
         return true
     end
-    if string.find(item.lower, "rejoin", 1, true)
-        or string.find(item.lower, "server hop", 1, true)
-        or string.find(item.lower, "join low player", 1, true) then
-        local ok = pcall(function()
-            TeleportService:Teleport(game.PlaceId, LocalPlayer)
-        end)
-        if ok then
-            pushEvent("teleport service called")
-        end
-        return ok
-    end
-    if string.find(item.lower, "reconnect", 1, true) then
-        ensureAntiAfk()
-        return true
-    end
-    return false
-end
-
-local function runInteligencia(item)
-    if string.find(item.lower, "detect player nearby", 1, true) then
-        local nearest = findNearestPlayerCharacter(120)
-        if nearest then
-            pushEvent("player nearby: " .. nearest.Name)
+    if hasWord(item, "rejoin") or hasWord(item, "server hop") or hasWord(item, "join low player") then
+        if cooldownReady("server_hop", 90) then
+            pcall(function()
+                TeleportService:Teleport(game.PlaceId, LocalPlayer)
+            end)
+            pushEvent("server hop called")
             return true
         end
         return false
     end
-    if string.find(item.lower, "detect admin", 1, true) then
-        local admin = detectPossibleAdmin()
-        if admin then
-            if now() - State.cache.lastAdminNotice > 10 then
-                State.cache.lastAdminNotice = now()
-                safeNotify("AutoHub", "Possivel staff: " .. admin.Name)
-                pushEvent("possible staff: " .. admin.Name)
-            end
-            return true
-        end
-        return false
-    end
-    if string.find(item.lower, "auto leave", 1, true) then
-        local admin = detectPossibleAdmin()
-        if admin then
+    if hasWord(item, "reconnect") then
+        if cooldownReady("reconnect", 120) then
             pcall(function()
                 TeleportService:Teleport(game.PlaceId, LocalPlayer)
             end)
@@ -1624,34 +1802,67 @@ local function runInteligencia(item)
         end
         return false
     end
-    if string.find(item.lower, "delay randomizado", 1, true) then
+    return false
+end
+
+local function runInteligencia(item)
+    if hasWord(item, "detect player nearby") then
+        local playerChar = nearestPlayer(State.config.threatDistance)
+        if playerChar then
+            pushEvent("player nearby: " .. playerChar.Name)
+            return true
+        end
+        return false
+    end
+    if hasWord(item, "detect admin") then
+        local admin = detectPossibleAdmin()
+        if admin then
+            if State.cache.lastAdminSeen ~= admin.Name then
+                State.cache.lastAdminSeen = admin.Name
+                safeNotify("AutoHub", "Possivel staff: " .. admin.Name)
+                pushEvent("possible staff: " .. admin.Name)
+            end
+            return true
+        end
+        return false
+    end
+    if hasWord(item, "auto leave") then
+        local admin = detectPossibleAdmin()
+        if admin and cooldownReady("autoleave", 12) then
+            pcall(function()
+                TeleportService:Teleport(game.PlaceId, LocalPlayer)
+            end)
+            pushEvent("auto leave triggered")
+            return true
+        end
+        return false
+    end
+    if hasWord(item, "delay randomizado") then
         task.wait(math.random() * 0.2)
         return true
     end
-    if string.find(item.lower, "anti report", 1, true) or string.find(item.lower, "anti ban", 1, true) then
+    if hasWord(item, "anti report") or hasWord(item, "anti ban") then
         return true
     end
     return false
 end
 
 local function runMisc(item)
-    if string.find(item.lower, "full bright", 1, true) then
+    if hasWord(item, "full bright") then
         Lighting.Brightness = 2
         Lighting.ClockTime = 14
         Lighting.GlobalShadows = false
         return true
     end
-    if string.find(item.lower, "remove fog", 1, true) then
+    if hasWord(item, "remove fog") then
         Lighting.FogEnd = 9e9
         return true
     end
-    if string.find(item.lower, "fps boost", 1, true)
-        or string.find(item.lower, "remove effects", 1, true)
-        or string.find(item.lower, "low graphics mode", 1, true) then
+    if hasWord(item, "fps boost") or hasWord(item, "remove effects") or hasWord(item, "low graphics mode") then
         applyLowGraphics()
         return true
     end
-    if string.find(item.lower, "white screen mode", 1, true) then
+    if hasWord(item, "white screen mode") then
         ensureWhiteOverlay(true)
         return true
     end
@@ -1660,103 +1871,86 @@ end
 
 local function runStats(item)
     local stat = "Melee"
-    if string.find(item.lower, "defense", 1, true) then
+    if hasWord(item, "defense") then
         stat = "Defense"
-    elseif string.find(item.lower, "sword", 1, true) then
+    elseif hasWord(item, "sword") then
         stat = "Sword"
-    elseif string.find(item.lower, "gun", 1, true) then
+    elseif hasWord(item, "gun") then
         stat = "Gun"
-    elseif string.find(item.lower, "blox fruit", 1, true) then
+    elseif hasWord(item, "blox fruit") then
         stat = "Demon Fruit"
-    elseif string.find(item.lower, "auto stats", 1, true) then
-        stat = "Melee"
     end
-    return tryFireStatsRemote(stat)
+    return tryStatsRemote(stat)
 end
 
 local function runInterfaceTools(item)
-    if string.find(item.lower, "save config", 1, true) then
+    if hasWord(item, "save config") then
         local ok = saveConfig()
         if ok then
             safeNotify("AutoHub", "config saved")
         end
         return ok
     end
-    if string.find(item.lower, "load config", 1, true) then
+    if hasWord(item, "load config") then
         local ok = loadConfig()
         if ok then
-            State.flags.requestRenderRows = true
             safeNotify("AutoHub", "config loaded")
         end
         return ok
     end
-    if string.find(item.lower, "keybind", 1, true) then
-        return true
-    end
-    return false
+    return true
 end
 
-local function runSystemCore(item)
-    if string.find(item.lower, "config save", 1, true) then
+local function runSistemaCore(item)
+    if hasWord(item, "config save") then
         return saveConfig()
     end
-    if string.find(item.lower, "config load", 1, true) then
-        local ok = loadConfig()
-        if ok then
-            State.flags.requestRenderRows = true
-        end
-        return ok
+    if hasWord(item, "config load") then
+        return loadConfig()
     end
-    if string.find(item.lower, "webhook", 1, true) then
+    if hasWord(item, "webhook") then
         return sendWebhookBatch()
     end
-    if string.find(item.lower, "auto update", 1, true) then
-        pushEvent("auto update check placeholder")
+    if hasWord(item, "auto update") then
+        pushEvent("auto update check")
         return true
     end
-    if string.find(item.lower, "key system", 1, true) or string.find(item.lower, "script hub", 1, true) then
-        return true
-    end
-    return false
+    return true
 end
 
-local function runAdvanced(item)
-    local keywords = {}
-    if string.find(item.lower, "sea event", 1, true) then
-        keywords = { "sea event", "ship raid", "sea" }
-    elseif string.find(item.lower, "leviathan", 1, true) then
-        keywords = { "leviathan" }
-    elseif string.find(item.lower, "ship raid", 1, true) then
-        keywords = { "ship raid", "ship" }
-    elseif string.find(item.lower, "haunted", 1, true) then
-        keywords = { "haunted", "castle" }
-    elseif string.find(item.lower, "trial puzzle", 1, true) then
-        keywords = { "trial", "puzzle" }
-    elseif string.find(item.lower, "temple", 1, true) then
-        keywords = { "temple" }
-    elseif string.find(item.lower, "gear", 1, true) then
-        keywords = { "gear", "blue gear" }
-    elseif string.find(item.lower, "mirage", 1, true) then
-        keywords = { "mirage" }
-    else
-        keywords = { "event" }
+local function runAvancadas(item)
+    local keys = { "event" }
+    if hasWord(item, "sea event") then
+        keys = { "sea", "ship raid", "event" }
+    elseif hasWord(item, "leviathan") then
+        keys = { "leviathan" }
+    elseif hasWord(item, "ship raid") then
+        keys = { "ship", "raid" }
+    elseif hasWord(item, "haunted") then
+        keys = { "haunted", "castle" }
+    elseif hasWord(item, "trial puzzle") then
+        keys = { "trial", "puzzle" }
+    elseif hasWord(item, "temple") then
+        keys = { "temple" }
+    elseif hasWord(item, "gear farming") or hasWord(item, "blue gear") then
+        keys = { "gear", "blue gear" }
+    elseif hasWord(item, "mirage") then
+        keys = { "mirage" }
     end
 
-    local target = findNearestKeywordObject(keywords, 1800)
-    if target then
-        pushEvent(item.name .. ": " .. target.Name)
-        if target:IsA("Model") and target:FindFirstChild("HumanoidRootPart") then
-            teleportNearModel(target, 14, false)
-        elseif target:IsA("BasePart") then
-            local root = getRoot()
-            if root then
-                root.CFrame = target.CFrame + Vector3.new(0, 10, 0)
-            end
+    local island = nearestIsland(2500)
+    if island and containsAny(string.lower(island.Name), keys) then
+        local part = island:IsA("BasePart") and island or island:FindFirstChild("HumanoidRootPart")
+        if part then
+            moveToCFrame(part.CFrame + Vector3.new(0, 10, 0), true)
+            pushEvent(item.name .. ": " .. island.Name)
+            return true
         end
-        return true
     end
-
-    local promptOk = runPromptKeywords(keywords, 1)
+    local promptOk = runPromptByKeywords(keys, 1)
+    if promptOk then
+        pushEvent(item.name .. ": prompt")
+    end
     return promptOk
 end
 
@@ -1772,38 +1966,33 @@ local CategoryHandlers = {
     haki = runHaki,
     teleport = runTeleport,
     player_mods = runPlayerMods,
-    esp_visual = runESP,
+    esp_visual = runEspVisual,
     recursos = runRecursos,
     server_runtime = runServerRuntime,
     inteligencia = runInteligencia,
     misc = runMisc,
     stats = runStats,
     interface_tools = runInterfaceTools,
-    sistema_core = runSystemCore,
-    avancadas = runAdvanced,
+    sistema_core = runSistemaCore,
+    avancadas = runAvancadas,
 }
 
 local function shouldAutoDisable(item)
-    local n = item.lower
-    return string.find(n, "config save", 1, true)
-        or string.find(n, "config load", 1, true)
-        or string.find(n, "save config", 1, true)
-        or string.find(n, "load config", 1, true)
-        or string.find(n, "rejoin", 1, true)
-        or string.find(n, "join low player", 1, true)
-        or string.find(n, "server hop", 1, true)
+    return hasWord(item, "save config")
+        or hasWord(item, "load config")
+        or hasWord(item, "config save")
+        or hasWord(item, "config load")
+        or hasWord(item, "server hop")
+        or hasWord(item, "rejoin")
+        or hasWord(item, "join low player")
 end
 
-local function runItem(item)
+local function executeItem(item)
     local handler = CategoryHandlers[item.categoryId]
     if not handler then
         return false
     end
-    local acted = handler(item)
-    if acted then
-        addAction(item.name, 1)
-    end
-    return acted
+    return handler(item)
 end
 
 local function corner(target, radius)
@@ -1823,14 +2012,14 @@ local function makeDraggable(frame, handle)
     local dragging = false
     local startPos
     local startInput
-    local activeInput
+    local currentInput
 
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             startPos = frame.Position
             startInput = input.Position
-            activeInput = input
+            currentInput = input
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -1840,7 +2029,7 @@ local function makeDraggable(frame, handle)
     end)
 
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == activeInput then
+        if dragging and input == currentInput then
             local delta = input.Position - startInput
             frame.Position = UDim2.new(
                 startPos.X.Scale,
@@ -1852,9 +2041,9 @@ local function makeDraggable(frame, handle)
     end)
 end
 
-local function setCategoryButtonVisual(activeId)
-    for catId, btn in pairs(State.categoryButtons) do
-        btn.BackgroundColor3 = (catId == activeId) and Theme.rowActive or Theme.panel2
+local function updateCategoryButtonVisual(activeCategory)
+    for catId, button in pairs(State.categoryButtons) do
+        button.BackgroundColor3 = (catId == activeCategory) and Theme.rowActive or Theme.panel2
     end
 end
 
@@ -1871,16 +2060,15 @@ end
 
 local renderRows
 
-local function setCategory(catId)
-    if not State.categoryLookup[catId] then
+local function setCategory(categoryId)
+    if not State.categoryLookup[categoryId] then
         return
     end
-    State.config.selectedCategory = catId
-    setCategoryButtonVisual(catId)
+    State.config.selectedCategory = categoryId
     if State.ui.categoryTitle then
-        local cat = State.categoryLookup[catId]
-        State.ui.categoryTitle.Text = cat.label
+        State.ui.categoryTitle.Text = State.categoryLookup[categoryId].label
     end
+    updateCategoryButtonVisual(categoryId)
     if renderRows then
         renderRows()
     end
@@ -1903,13 +2091,13 @@ local function buildUI()
     stroke(main)
     State.ui.main = main
 
-    local grad = Instance.new("UIGradient")
-    grad.Color = ColorSequence.new({
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(8, 12, 22)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 9, 17)),
     })
-    grad.Rotation = 90
-    grad.Parent = main
+    gradient.Rotation = 90
+    gradient.Parent = main
 
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 30)
@@ -1917,7 +2105,7 @@ local function buildUI()
     header.Parent = main
 
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(0, 340, 0, 18)
+    title.Size = UDim2.new(0, 320, 0, 18)
     title.Position = UDim2.new(0, 8, 0, 6)
     title.BackgroundTransparency = 1
     title.Font = Enum.Font.GothamBold
@@ -1928,12 +2116,13 @@ local function buildUI()
     title.Parent = header
 
     local hint = Instance.new("TextLabel")
-    hint.Size = UDim2.new(0, 180, 0, 14)
-    hint.Position = UDim2.new(1, -210, 0, 8)
+    hint.Size = UDim2.new(0, 120, 0, 14)
+    hint.Position = UDim2.new(1, -150, 0, 8)
     hint.BackgroundTransparency = 1
     hint.Font = Enum.Font.Gotham
     hint.TextSize = 10
     hint.TextColor3 = Theme.muted
+    hint.TextXAlignment = Enum.TextXAlignment.Right
     hint.Text = "END hide/show"
     hint.Parent = header
 
@@ -1950,23 +2139,23 @@ local function buildUI()
     stroke(close)
 
     local sidebar = Instance.new("Frame")
-    sidebar.Size = UDim2.new(0, 172, 1, -36)
+    sidebar.Size = UDim2.new(0, 174, 1, -36)
     sidebar.Position = UDim2.new(0, 6, 0, 30)
     sidebar.BackgroundColor3 = Theme.panel
     sidebar.Parent = main
     corner(sidebar, 8)
     stroke(sidebar)
 
-    local categoryTitle = Instance.new("TextLabel")
-    categoryTitle.Size = UDim2.new(1, -12, 0, 16)
-    categoryTitle.Position = UDim2.new(0, 6, 0, 6)
-    categoryTitle.BackgroundTransparency = 1
-    categoryTitle.Font = Enum.Font.GothamBold
-    categoryTitle.TextSize = 11
-    categoryTitle.TextColor3 = Theme.text
-    categoryTitle.TextXAlignment = Enum.TextXAlignment.Left
-    categoryTitle.Text = "Categorias"
-    categoryTitle.Parent = sidebar
+    local catTitle = Instance.new("TextLabel")
+    catTitle.Size = UDim2.new(1, -12, 0, 16)
+    catTitle.Position = UDim2.new(0, 6, 0, 6)
+    catTitle.BackgroundTransparency = 1
+    catTitle.Font = Enum.Font.GothamBold
+    catTitle.TextSize = 11
+    catTitle.TextColor3 = Theme.text
+    catTitle.TextXAlignment = Enum.TextXAlignment.Left
+    catTitle.Text = "Categorias"
+    catTitle.Parent = sidebar
 
     local catScroll = Instance.new("ScrollingFrame")
     catScroll.Size = UDim2.new(1, -8, 1, -28)
@@ -1975,7 +2164,7 @@ local function buildUI()
     catScroll.ScrollBarThickness = 4
     catScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     catScroll.Parent = sidebar
-    State.ui.categoryScroll = catScroll
+    State.ui.catScroll = catScroll
 
     local catLayout = Instance.new("UIListLayout")
     catLayout.Padding = UDim.new(0, 4)
@@ -1985,7 +2174,7 @@ local function buildUI()
     end)
 
     local content = Instance.new("Frame")
-    content.Size = UDim2.new(1, -184, 1, -36)
+    content.Size = UDim2.new(1, -186, 1, -36)
     content.Position = UDim2.new(0, 180, 0, 30)
     content.BackgroundColor3 = Theme.panel
     content.Parent = main
@@ -1993,19 +2182,19 @@ local function buildUI()
     stroke(content)
 
     local contentHeader = Instance.new("TextLabel")
-    contentHeader.Size = UDim2.new(0, 150, 0, 16)
+    contentHeader.Size = UDim2.new(0, 170, 0, 16)
     contentHeader.Position = UDim2.new(0, 8, 0, 6)
     contentHeader.BackgroundTransparency = 1
     contentHeader.Font = Enum.Font.GothamBold
-    contentHeader.TextSize = 12
+    contentHeader.TextSize = 11
     contentHeader.TextColor3 = Theme.text
     contentHeader.TextXAlignment = Enum.TextXAlignment.Left
     contentHeader.Parent = content
     State.ui.categoryTitle = contentHeader
 
     local countLabel = Instance.new("TextLabel")
-    countLabel.Size = UDim2.new(0, 120, 0, 14)
-    countLabel.Position = UDim2.new(1, -128, 0, 8)
+    countLabel.Size = UDim2.new(0, 90, 0, 14)
+    countLabel.Position = UDim2.new(1, -96, 0, 7)
     countLabel.BackgroundTransparency = 1
     countLabel.Font = Enum.Font.Gotham
     countLabel.TextSize = 10
@@ -2015,9 +2204,9 @@ local function buildUI()
     State.ui.countLabel = countLabel
 
     local search = Instance.new("TextBox")
-    search.Size = UDim2.new(0, 116, 0, 20)
+    search.Size = UDim2.new(0, 106, 0, 20)
     search.Position = UDim2.new(0, 8, 0, 24)
-    search.PlaceholderText = "Search function"
+    search.PlaceholderText = "Search"
     search.Text = State.config.searchText
     search.Font = Enum.Font.Gotham
     search.TextSize = 10
@@ -2030,8 +2219,8 @@ local function buildUI()
     State.ui.search = search
 
     local webhook = Instance.new("TextBox")
-    webhook.Size = UDim2.new(0, 150, 0, 20)
-    webhook.Position = UDim2.new(0, 128, 0, 24)
+    webhook.Size = UDim2.new(0, 122, 0, 20)
+    webhook.Position = UDim2.new(0, 118, 0, 24)
     webhook.PlaceholderText = "Webhook URL"
     webhook.Text = State.config.webhookUrl
     webhook.Font = Enum.Font.Gotham
@@ -2045,8 +2234,8 @@ local function buildUI()
     State.ui.webhook = webhook
 
     local saveBtn = Instance.new("TextButton")
-    saveBtn.Size = UDim2.new(0, 40, 0, 20)
-    saveBtn.Position = UDim2.new(0, 284, 0, 24)
+    saveBtn.Size = UDim2.new(0, 36, 0, 20)
+    saveBtn.Position = UDim2.new(0, 244, 0, 24)
     saveBtn.Text = "Save"
     saveBtn.Font = Enum.Font.GothamBold
     saveBtn.TextSize = 9
@@ -2057,8 +2246,8 @@ local function buildUI()
     stroke(saveBtn)
 
     local loadBtn = Instance.new("TextButton")
-    loadBtn.Size = UDim2.new(0, 40, 0, 20)
-    loadBtn.Position = UDim2.new(0, 328, 0, 24)
+    loadBtn.Size = UDim2.new(0, 36, 0, 20)
+    loadBtn.Position = UDim2.new(0, 284, 0, 24)
     loadBtn.Text = "Load"
     loadBtn.Font = Enum.Font.GothamBold
     loadBtn.TextSize = 9
@@ -2069,8 +2258,8 @@ local function buildUI()
     stroke(loadBtn)
 
     local onBtn = Instance.new("TextButton")
-    onBtn.Size = UDim2.new(0, 24, 0, 20)
-    onBtn.Position = UDim2.new(0, 372, 0, 24)
+    onBtn.Size = UDim2.new(0, 20, 0, 20)
+    onBtn.Position = UDim2.new(0, 324, 0, 24)
     onBtn.Text = "+"
     onBtn.Font = Enum.Font.GothamBold
     onBtn.TextSize = 11
@@ -2081,8 +2270,8 @@ local function buildUI()
     stroke(onBtn)
 
     local offBtn = Instance.new("TextButton")
-    offBtn.Size = UDim2.new(0, 24, 0, 20)
-    offBtn.Position = UDim2.new(0, 400, 0, 24)
+    offBtn.Size = UDim2.new(0, 20, 0, 20)
+    offBtn.Position = UDim2.new(0, 348, 0, 24)
     offBtn.Text = "-"
     offBtn.Font = Enum.Font.GothamBold
     offBtn.TextSize = 11
@@ -2092,9 +2281,54 @@ local function buildUI()
     corner(offBtn, 5)
     stroke(offBtn)
 
+    local mobBox = Instance.new("TextBox")
+    mobBox.Size = UDim2.new(0, 114, 0, 20)
+    mobBox.Position = UDim2.new(0, 8, 0, 46)
+    mobBox.PlaceholderText = "Mob keyword"
+    mobBox.Text = State.config.mobKeyword
+    mobBox.Font = Enum.Font.Gotham
+    mobBox.TextSize = 10
+    mobBox.TextColor3 = Theme.text
+    mobBox.PlaceholderColor3 = Theme.muted
+    mobBox.BackgroundColor3 = Theme.panel2
+    mobBox.Parent = content
+    corner(mobBox, 5)
+    stroke(mobBox)
+    State.ui.mobBox = mobBox
+
+    local bossBox = Instance.new("TextBox")
+    bossBox.Size = UDim2.new(0, 114, 0, 20)
+    bossBox.Position = UDim2.new(0, 126, 0, 46)
+    bossBox.PlaceholderText = "Boss keyword"
+    bossBox.Text = State.config.bossKeyword
+    bossBox.Font = Enum.Font.Gotham
+    bossBox.TextSize = 10
+    bossBox.TextColor3 = Theme.text
+    bossBox.PlaceholderColor3 = Theme.muted
+    bossBox.BackgroundColor3 = Theme.panel2
+    bossBox.Parent = content
+    corner(bossBox, 5)
+    stroke(bossBox)
+    State.ui.bossBox = bossBox
+
+    local fruitBox = Instance.new("TextBox")
+    fruitBox.Size = UDim2.new(0, 114, 0, 20)
+    fruitBox.Position = UDim2.new(0, 244, 0, 46)
+    fruitBox.PlaceholderText = "Fruit keyword"
+    fruitBox.Text = State.config.fruitKeyword
+    fruitBox.Font = Enum.Font.Gotham
+    fruitBox.TextSize = 10
+    fruitBox.TextColor3 = Theme.text
+    fruitBox.PlaceholderColor3 = Theme.muted
+    fruitBox.BackgroundColor3 = Theme.panel2
+    fruitBox.Parent = content
+    corner(fruitBox, 5)
+    stroke(fruitBox)
+    State.ui.fruitBox = fruitBox
+
     local list = Instance.new("ScrollingFrame")
-    list.Size = UDim2.new(1, -8, 1, -76)
-    list.Position = UDim2.new(0, 4, 0, 48)
+    list.Size = UDim2.new(1, -8, 1, -90)
+    list.Position = UDim2.new(0, 4, 0, 70)
     list.CanvasSize = UDim2.new(0, 0, 0, 0)
     list.BackgroundTransparency = 1
     list.ScrollBarThickness = 4
@@ -2114,27 +2348,27 @@ local function buildUI()
     State.ui.footer = footer
 
     local function createCategoryButton(cat)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, -8, 0, 22)
-        btn.BackgroundColor3 = Theme.panel2
-        btn.Text = cat.label .. " (" .. tostring(#cat.items) .. ")"
-        btn.Font = Enum.Font.Gotham
-        btn.TextSize = 10
-        btn.TextColor3 = Theme.text
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.AutoButtonColor = false
-        btn.Parent = catScroll
-        corner(btn, 5)
-        stroke(btn, Theme.border)
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(1, -8, 0, 22)
+        b.BackgroundColor3 = Theme.panel2
+        b.Text = cat.label .. " (" .. tostring(#cat.items) .. ")"
+        b.Font = Enum.Font.Gotham
+        b.TextSize = 10
+        b.TextColor3 = Theme.text
+        b.TextXAlignment = Enum.TextXAlignment.Left
+        b.AutoButtonColor = false
+        b.Parent = catScroll
+        corner(b, 5)
+        stroke(b, Theme.border)
 
         local pad = Instance.new("UIPadding")
         pad.PaddingLeft = UDim.new(0, 8)
-        pad.Parent = btn
+        pad.Parent = b
 
-        btn.MouseButton1Click:Connect(function()
+        b.MouseButton1Click:Connect(function()
             setCategory(cat.id)
         end)
-        State.categoryButtons[cat.id] = btn
+        State.categoryButtons[cat.id] = b
     end
 
     for _, cat in ipairs(CategoryDefs) do
@@ -2142,9 +2376,9 @@ local function buildUI()
     end
 
     function renderRows()
-        for _, row in pairs(State.visibleRows) do
-            if row.frame and row.frame.Parent then
-                row.frame:Destroy()
+        for _, r in pairs(State.visibleRows) do
+            if r.frame and r.frame.Parent then
+                r.frame:Destroy()
             end
         end
         State.visibleRows = {}
@@ -2153,13 +2387,17 @@ local function buildUI()
         local ids = State.categoryItems[catId] or {}
         local filter = string.lower(trim(State.config.searchText))
         local y = 0
-        local visibleCount = 0
+        local visible = 0
+        local enabledCount = 0
 
         for _, itemId in ipairs(ids) do
             local item = State.items[itemId]
             if item then
+                if State.toggles[itemId] then
+                    enabledCount = enabledCount + 1
+                end
                 if filter == "" or string.find(item.lower, filter, 1, true) then
-                    visibleCount = visibleCount + 1
+                    visible = visible + 1
                     local row = Instance.new("Frame")
                     row.Size = UDim2.new(1, -8, 0, 24)
                     row.Position = UDim2.new(0, 4, 0, y)
@@ -2176,7 +2414,7 @@ local function buildUI()
                     corner(dot, 4)
 
                     local name = Instance.new("TextLabel")
-                    name.Size = UDim2.new(1, -98, 1, 0)
+                    name.Size = UDim2.new(1, -100, 1, 0)
                     name.Position = UDim2.new(0, 18, 0, 0)
                     name.BackgroundTransparency = 1
                     name.Font = Enum.Font.Gotham
@@ -2204,23 +2442,19 @@ local function buildUI()
 
                     State.visibleRows[itemId] = {
                         frame = row,
-                        toggle = toggle,
                         dot = dot,
+                        toggle = toggle,
                     }
                     updateRowVisual(itemId)
-
                     y = y + 26
                 end
             end
         end
 
         list.CanvasSize = UDim2.new(0, 0, 0, y + 2)
-
-        local total = #ids
-        local enabled = getCategoryEnabledCount(catId)
-        countLabel.Text = tostring(enabled) .. "/" .. tostring(total) .. " ON"
-        contentHeader.Text = State.categoryLookup[catId].label .. " [" .. tostring(visibleCount) .. "]"
-        setCategoryButtonVisual(catId)
+        countLabel.Text = tostring(enabledCount) .. "/" .. tostring(#ids) .. " ON"
+        contentHeader.Text = State.categoryLookup[catId].label .. " [" .. tostring(visible) .. "]"
+        updateCategoryButtonVisual(catId)
     end
 
     search:GetPropertyChangedSignal("Text"):Connect(function()
@@ -2228,12 +2462,20 @@ local function buildUI()
         renderRows()
     end)
 
-    webhook.FocusLost:Connect(function()
+    local function syncFields()
         State.config.webhookUrl = trim(webhook.Text)
-    end)
+        State.config.mobKeyword = trim(mobBox.Text)
+        State.config.bossKeyword = trim(bossBox.Text)
+        State.config.fruitKeyword = trim(fruitBox.Text)
+    end
+
+    webhook.FocusLost:Connect(syncFields)
+    mobBox.FocusLost:Connect(syncFields)
+    bossBox.FocusLost:Connect(syncFields)
+    fruitBox.FocusLost:Connect(syncFields)
 
     saveBtn.MouseButton1Click:Connect(function()
-        State.config.webhookUrl = trim(webhook.Text)
+        syncFields()
         if saveConfig() then
             safeNotify("AutoHub", "Config saved")
         else
@@ -2243,8 +2485,12 @@ local function buildUI()
 
     loadBtn.MouseButton1Click:Connect(function()
         if loadConfig() then
-            webhook.Text = State.config.webhookUrl
             search.Text = State.config.searchText
+            webhook.Text = State.config.webhookUrl
+            mobBox.Text = State.config.mobKeyword
+            bossBox.Text = State.config.bossKeyword
+            fruitBox.Text = State.config.fruitKeyword
+            setCategory(State.config.selectedCategory)
             renderRows()
             safeNotify("AutoHub", "Config loaded")
         else
@@ -2253,18 +2499,18 @@ local function buildUI()
     end)
 
     onBtn.MouseButton1Click:Connect(function()
-        local catId = State.config.selectedCategory
-        for _, itemId in ipairs(State.categoryItems[catId]) do
-            State.toggles[itemId] = true
-            State.nextRun[itemId] = 0
+        local cat = State.config.selectedCategory
+        for _, id in ipairs(State.categoryItems[cat]) do
+            State.toggles[id] = true
+            State.nextRun[id] = 0
         end
         renderRows()
     end)
 
     offBtn.MouseButton1Click:Connect(function()
-        local catId = State.config.selectedCategory
-        for _, itemId in ipairs(State.categoryItems[catId]) do
-            State.toggles[itemId] = false
+        local cat = State.config.selectedCategory
+        for _, id in ipairs(State.categoryItems[cat]) do
+            State.toggles[id] = false
         end
         renderRows()
     end)
@@ -2273,7 +2519,7 @@ local function buildUI()
         State.running = false
     end)
 
-    UserInputService.InputBegan:Connect(function(input, gp)
+    State.conns.endKey = UserInputService.InputBegan:Connect(function(input, gp)
         if gp then
             return
         end
@@ -2287,7 +2533,7 @@ local function buildUI()
     setCategory(State.config.selectedCategory)
 end
 
-local function refreshStatus()
+local function refreshStatusText()
     local uptime = math.floor(now() - State.startedAt)
     if State.ui.footer then
         State.ui.footer.Text = "Uptime: " .. tostring(uptime)
@@ -2296,22 +2542,18 @@ local function refreshStatus()
             .. " | Errors: " .. tostring(State.stats.errors)
             .. " | Last: " .. tostring(State.stats.last)
     end
-    if not isEnabledByName("misc", "white screen mode") then
-        ensureWhiteOverlay(false)
-    end
 end
 
 local function cleanup()
     State.running = false
 
-    for _, conn in pairs(State.connections) do
+    for _, conn in pairs(State.conns) do
         if conn then
             pcall(function()
                 conn:Disconnect()
             end)
         end
     end
-
     clearHighlights()
     ensureWhiteOverlay(false)
 
@@ -2320,32 +2562,30 @@ local function cleanup()
             State.ui.gui:Destroy()
         end)
     end
-
     pcall(function()
-        getgenv().AutoHubV5Loaded = nil
+        getgenv().AutoHubV6Loaded = nil
     end)
 end
 
-local function startScheduler()
+local function schedulerLoop()
     task.spawn(function()
         while State.running do
             local current = now()
             local active = 0
 
-            for itemId, item in pairs(State.items) do
+            for _, itemId in ipairs(State.itemOrder) do
                 if State.toggles[itemId] then
                     active = active + 1
-                    if current >= (State.nextRun[itemId] or 0) then
+                    local item = State.items[itemId]
+                    if item and current >= (State.nextRun[itemId] or 0) then
                         State.nextRun[itemId] = current + (item.interval or 1)
                         local ok, acted = pcall(function()
-                            return runItem(item)
+                            return executeItem(item)
                         end)
                         if not ok then
                             addError("err: " .. item.name)
-                        else
-                            if acted then
-                                State.stats.last = item.name
-                            end
+                        elseif acted then
+                            addAction(item.name, 1)
                             if shouldAutoDisable(item) then
                                 State.toggles[itemId] = false
                                 updateRowVisual(itemId)
@@ -2356,27 +2596,39 @@ local function startScheduler()
             end
 
             State.activeCount = active
-
-            if State.flags.requestRenderRows and renderRows then
-                State.flags.requestRenderRows = false
-                renderRows()
-            end
-
-            task.wait(0.1)
+            task.wait(0.08)
         end
     end)
 end
 
-local function startStatusLoop()
+local function perceptionLoop()
     task.spawn(function()
         while State.running do
-            refreshStatus()
+            local ok, err = pcall(refreshPerception)
+            if not ok then
+                addError("perception err")
+                warn("[AutoHub] perception error: " .. tostring(err))
+            end
+            task.wait(0.45)
+        end
+    end)
+end
+
+local function statusLoop()
+    task.spawn(function()
+        while State.running do
+            if categoryPhraseEnabled("misc", "white screen mode") then
+                ensureWhiteOverlay(true)
+            else
+                ensureWhiteOverlay(false)
+            end
+            refreshStatusText()
             task.wait(0.25)
         end
     end)
 end
 
-local function startAutosave()
+local function autosaveLoop()
     task.spawn(function()
         local last = now()
         while State.running do
@@ -2389,22 +2641,35 @@ local function startAutosave()
     end)
 end
 
-local function boot()
-    loadConfig()
-    buildUI()
-    startScheduler()
-    startStatusLoop()
-    startAutosave()
-    ensureInfiniteJump()
-
-    State.connections.heartbeat = RunService.Heartbeat:Connect(function()
+local function runtimeHeartbeat()
+    State.conns.heartbeat = RunService.Heartbeat:Connect(function()
         if not State.running then
             return
         end
-        if isEnabledByName("server_runtime", "anti afk") then
+        if categoryPhraseEnabled("server_runtime", "anti afk") or categoryPhraseEnabled("auto_farm", "afk") then
             ensureAntiAfk()
         end
+        if categoryPhraseEnabled("misc", "fps boost") or categoryPhraseEnabled("misc", "low graphics mode") then
+            applyLowGraphics()
+        end
+        if categoryPhraseEnabled("esp_visual", "highlight") or categoryPhraseEnabled("esp_visual", "boxes") then
+            refreshESPVisuals()
+        end
+        applyHumanoidMods()
     end)
+end
+
+local function boot()
+    loadConfig()
+    buildUI()
+    ensureInfiniteJump()
+    refreshPerception()
+
+    perceptionLoop()
+    schedulerLoop()
+    statusLoop()
+    autosaveLoop()
+    runtimeHeartbeat()
 
     safeNotify("AutoHub", "Organized UI loaded (" .. VERSION .. ")")
 end
